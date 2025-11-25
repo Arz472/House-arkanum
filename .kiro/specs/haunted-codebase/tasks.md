@@ -194,297 +194,430 @@
 
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Implement Infinite Loop Ghost Room
-- [ ] 5.1 Create LoopRoom scene with placeholder geometry
+- [x] 5. Implement Infinite Loop Ghost Room
+
+
+
+
+
+- [x] 5.1 Create LoopRoom scene with placeholder geometry
+
+
   - Create small room using box geometries
   - Add stone wall textures or dark materials
   - Set up lighting (1 ambient + 1 dim directional)
   - _Requirements: 6.1_
 
-- [ ] 5.2 Add ghost entity with looping animation
+- [x] 5.2 Add ghost entity with looping animation
+
+
   - Create ghost using sphere placeholder
   - Implement floating animation (up-down, circular motion)
   - Use `useFrame` for animation loop
   - _Requirements: 6.2_
 
-- [ ] 5.3 Implement ghost click counter
+- [x] 5.3 Implement ghost click counter
+
+
   - Add click handler to ghost
   - Track click count in local state
   - _Requirements: 6.3_
 
-- [ ] 5.4 Write property test for ghost click counter
+- [x] 5.4 Write property test for ghost click counter
+
+
   - **Property 10: Ghost click counter increment**
   - **Validates: Requirements 6.3**
 
-- [ ] 5.5 Implement ghost disappearance on third click
+- [x] 5.5 Implement ghost disappearance on third click
+
+
   - Check if counter reaches 3
   - Play glitch animation (scale/opacity jitter)
   - Set ghost visibility to false
   - _Requirements: 6.4_
 
-- [ ] 5.6 Add success overlay and game state update
+- [x] 5.6 Add success overlay and game state update
+
+
   - Display "Infinite loop broken" message
   - Add "Return to Hallway" button
   - Call `markRoomFixed('loop')`
   - _Requirements: 6.5, 6.6_
 
-- [ ] 5.7 Write unit tests for Loop Room
+- [x] 5.7 Write unit tests for Loop Room
+
+
   - Test ghost disappears after 3 clicks
   - Test success overlay appears when ghost disappears
   - Test game state updates when ghost disappears
   - _Requirements: 6.4, 6.5, 6.6_
 
-- [ ] 6. Implement Null Pointer Candles Room
-- [ ] 6.1 Create NullCandlesRoom scene with placeholder geometry
+- [x] 6. Implement Null Pointer Candles Room
+
+
+
+
+
+- [x] 6.1 Create NullCandlesRoom scene with placeholder geometry
+
+
   - Create room using box geometries
   - Add stone/brick wall materials
   - Set up lighting
   - _Requirements: 7.1_
 
-- [ ] 6.2 Create candle objects with lit/unlit states
+- [x] 6.2 Create candle objects with lit/unlit states
+
+
   - Create candle using cylinder placeholder
   - Initialize array of 5-10 candles
   - Set some candles to lit (emissive material) and some to unlit
   - _Requirements: 7.2, 7.3_
 
-- [ ] 6.3 Implement draggable flame orb
+- [x] 6.3 Implement draggable flame orb
+
+
   - Create flame orb using sphere with emissive material
   - Implement drag controls using drei's `DragControls` or custom implementation
   - Update flame position on drag
   - _Requirements: 7.4_
 
-- [ ] 6.4 Write property test for flame drag
+- [x] 6.4 Write property test for flame drag
+
+
   - **Property 11: Flame drag updates position**
   - **Validates: Requirements 7.4**
 
-- [ ] 6.5 Implement candle lighting by proximity
+- [x] 6.5 Implement candle lighting by proximity
+
+
   - Check distance between flame and each unlit candle in `useFrame`
   - When distance < threshold, change candle to lit state
   - Update candle material to emissive
   - _Requirements: 7.5_
 
-- [ ] 6.6 Write property test for candle lighting
+- [x] 6.6 Write property test for candle lighting
+
+
   - **Property 12: Candle lighting by proximity**
   - **Validates: Requirements 7.5**
 
-- [ ] 6.7 Add candle count HUD
+- [x] 6.7 Add candle count HUD
+
+
   - Display "Candles lit: X / Y" counter
   - Update count based on lit candles
   - _Requirements: 7.7_
 
-- [ ] 6.8 Write property test for candle count HUD
+- [x] 6.8 Write property test for candle count HUD
+
+
   - **Property 13: Candle count HUD accuracy**
   - **Validates: Requirements 7.7**
 
-- [ ] 6.9 Implement success condition and game state update
+- [x] 6.9 Implement success condition and game state update
+
+
   - Check if all candles are lit
   - Display "Null references resolved" overlay
   - Add return button
   - Call `markRoomFixed('nullCandles')`
   - _Requirements: 7.6, 7.8_
 
-- [ ] 6.10 Write unit tests for Null Candles Room
+- [x] 6.10 Write unit tests for Null Candles Room
+
+
   - Test initial state has both lit and unlit candles
   - Test all candles lit triggers success overlay
   - Test game state updates on success
   - _Requirements: 7.3, 7.6, 7.8_
 
-- [ ] 7. Implement 404 Door Room
-- [ ] 7.1 Create Door404Room scene with placeholder geometry
+- [x] 7. Implement 404 Door Room
+
+
+
+
+
+- [x] 7.1 Create Door404Room scene with placeholder geometry
+
+
   - Create corridor using box geometries
   - Add door at the end (reuse door model from hallway)
   - Set up lighting
   - _Requirements: 8.1_
 
-- [ ] 7.2 Add "404" label with glitch effect
+- [x] 7.2 Add "404" label with glitch effect
+
   - Create floating text above door using drei's `Text`
   - Implement subtle glitch animation (scale jitter, flicker)
   - _Requirements: 8.2, 8.7_
 
-- [ ] 7.3 Create three draggable rune objects
+- [x] 7.3 Create three draggable rune objects
+
   - Create runes using cylinder or plane primitives
   - Add simple symbols or textures to distinguish them
   - Position runes in front of door
   - _Requirements: 8.3_
 
-- [ ] 7.4 Implement horizontal drag constraints for runes
+- [x] 7.4 Implement horizontal drag constraints for runes
+
   - Add drag controls to each rune
   - Constrain movement to x-axis only
   - Define min/max bounds for track
   - _Requirements: 8.4_
 
-- [ ] 7.5 Write property test for rune drag constraints
+- [x] 7.5 Write property test for rune drag constraints
+
+
   - **Property 14: Rune horizontal drag constraint**
   - **Validates: Requirements 8.4**
 
-- [ ] 7.6 Implement rune order validation and door opening
+- [x] 7.6 Implement rune order validation and door opening
+
   - Define correct rune order
   - Check if runes are in correct positions
   - Trigger door opening animation (rotation)
   - _Requirements: 8.5_
 
-- [ ] 7.7 Add success overlay and game state update
+- [x] 7.7 Add success overlay and game state update
+
   - Display "Routes restored" message
   - Add return button
   - Call `markRoomFixed('door404')`
   - _Requirements: 8.6, 8.8_
 
-- [ ] 7.8 Write unit tests for 404 Room
+- [x] 7.8 Write unit tests for 404 Room
+
+
   - Test exactly 3 runes are present
   - Test door opens when runes in correct order
   - Test success overlay appears when door opens
   - Test game state updates on success
   - _Requirements: 8.3, 8.5, 8.6, 8.8_
 
-- [ ] 8. Checkpoint - Ensure all tests pass
+- [x] 8. Checkpoint - Ensure all tests pass
+
+
+
+
+
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 9. Implement Memory Leak Monster Room
-- [ ] 9.1 Create MemoryLeakRoom scene with placeholder geometry
+- [x] 9. Implement Memory Leak Monster Room
+
+
+
+
+
+- [x] 9.1 Create MemoryLeakRoom scene with placeholder geometry
+
+
   - Create room using box geometries
   - Set up lighting
   - _Requirements: 9.1_
 
-- [ ] 9.2 Create monster with growth behavior
+- [x] 9.2 Create monster with growth behavior
+
+
   - Create monster using sphere or blob placeholder
   - Implement gradual scale increase over time in `useFrame`
   - Track monster scale in state
   - _Requirements: 9.2_
 
-- [ ] 9.3 Write property test for monster growth
+- [x] 9.3 Write property test for monster growth
+
+
   - **Property 15: Monster growth over time**
   - **Validates: Requirements 9.2**
 
-- [ ] 9.4 Implement GC orb spawning system
+- [x] 9.4 Implement GC orb spawning system
+
+
   - Spawn orbs around monster at intervals
   - Limit concurrent orbs to maximum of 5
   - Use sphere primitives with emissive material
   - _Requirements: 9.3_
 
-- [ ] 9.5 Write property test for orb count limit
+- [x] 9.5 Write property test for orb count limit
+
+
   - **Property 16: GC orb count limit**
   - **Validates: Requirements 9.3**
 
-- [ ] 9.6 Implement orb collection and monster shrinking
+- [x] 9.6 Implement orb collection and monster shrinking
+
+
   - Add click handlers to orbs
   - Remove orb on click
   - Reduce monster scale on orb collection
   - _Requirements: 9.4_
 
-- [ ] 9.7 Write property test for orb collection
+- [x] 9.7 Write property test for orb collection
+
+
   - **Property 17: Orb collection reduces monster**
   - **Validates: Requirements 9.4**
 
-- [ ] 9.8 Add memory usage HUD bar
+- [x] 9.8 Add memory usage HUD bar
+
+
   - Create bar component that visualizes monster scale
   - Update bar proportionally to monster size
   - Display "Memory Usage" label
   - _Requirements: 9.6_
 
-- [ ] 9.9 Write property test for memory HUD
+- [x] 9.9 Write property test for memory HUD
+
+
   - **Property 18: Memory HUD proportional to monster**
   - **Validates: Requirements 9.6**
 
-- [ ] 9.10 Implement success condition and game state update
+- [x] 9.10 Implement success condition and game state update
+
+
   - Check if monster scale returns to safe range
   - Display "Memory leak fixed" overlay
   - Add return button
   - Call `markRoomFixed('leak')`
   - _Requirements: 9.5, 9.7_
 
-- [ ] 9.11 Write unit tests for Memory Leak Room
+- [x] 9.11 Write unit tests for Memory Leak Room
+
+
   - Test monster scale increases over time
   - Test orb collection reduces monster scale
   - Test success overlay appears when monster stabilized
   - Test game state updates on success
   - _Requirements: 9.2, 9.4, 9.5, 9.7_
 
-- [ ] 10. Implement Possessed DOM Mirror Room
-- [ ] 10.1 Create MirrorRoom scene with placeholder geometry
+- [x] 10. Implement Possessed DOM Mirror Room
+
+
+
+
+- [x] 10.1 Create MirrorRoom scene with placeholder geometry
+
+
   - Create room using box geometries
   - Add mirror plane on one wall
   - Add simple frame around mirror
   - Set up lighting
   - _Requirements: 10.1_
 
-- [ ] 10.2 Create real orb that follows mouse
+- [x] 10.2 Create real orb that follows mouse
+
+
   - Create orb using sphere with emissive material
   - Track mouse position
   - Update orb position based on mouse coordinates
   - _Requirements: 10.2, 10.4_
 
-- [ ] 10.3 Write property test for real orb mouse tracking
+- [x] 10.3 Write property test for real orb mouse tracking
+
+
   - **Property 19: Real orb follows mouse**
   - **Validates: Requirements 10.4**
 
-- [ ] 10.4 Create reflection orb with delay/offset
+- [x] 10.4 Create reflection orb with delay/offset
+
+
   - Create second orb for reflection
   - Apply position delay or offset relative to real orb
   - _Requirements: 10.3_
 
-- [ ] 10.5 Implement sync detection logic
+- [x] 10.5 Implement sync detection logic
+
+
   - Calculate distance between real and reflection orbs
   - Track time when distance is below threshold
   - Trigger success when synced for 3 seconds
   - _Requirements: 10.5_
 
-- [ ] 10.6 Write property test for mirror sync
+- [x] 10.6 Write property test for mirror sync
+
+
   - **Property 20: Mirror sync threshold and duration**
   - **Validates: Requirements 10.5**
 
-- [ ] 10.7 Add success overlay and game state update
+- [x] 10.7 Add success overlay and game state update
+
+
   - Display "UI and DOM back in sync" message
   - Add return button
   - Call `markRoomFixed('mirror')`
   - _Requirements: 10.6, 10.7_
 
-- [ ] 10.8 Write unit tests for Mirror Room
+- [x] 10.8 Write unit tests for Mirror Room
+
+
   - Test real orb position updates with mouse movement
   - Test success triggers after sustained sync
   - Test success overlay appears
   - Test game state updates on success
   - _Requirements: 10.4, 10.5, 10.6, 10.7_
 
-- [ ] 11. Implement Commit Altar Scene
-- [ ] 11.1 Create CommitAltarScene with placeholder geometry
+- [x] 11. Implement Commit Altar Scene
+
+
+
+
+- [x] 11.1 Create CommitAltarScene with placeholder geometry
+
+
   - Create altar room using box geometries
   - Add central altar or terminal object
   - Set up atmospheric lighting
   - _Requirements: 11.1_
 
-- [ ] 11.2 Create summary screen display
+- [x] 11.2 Create summary screen display
+
   - Display "All bugs resolved. Commit fixes?" text
   - Show checkmarks for each fixed room from game state
   - _Requirements: 11.2, 11.3_
 
-- [ ] 11.3 Write property test for altar checkmarks
+- [x] 11.3 Write property test for altar checkmarks
+
+
   - **Property 21: Altar checkmarks match game state**
   - **Validates: Requirements 11.3**
 
-- [ ] 11.4 Implement commit button with validation
+- [x] 11.4 Implement commit button with validation
+
   - Add commit button
   - Validate all rooms are fixed before allowing commit
   - Trigger glitch/flash effect on commit
   - _Requirements: 11.4, 14.5_
 
-- [ ] 11.5 Write property test for commit validation
+- [x] 11.5 Write property test for commit validation
+
   - **Property 25: Commit requires all rooms fixed**
   - **Validates: Requirements 14.5**
 
-- [ ] 11.6 Add ending sequence
+- [x] 11.6 Add ending sequence
+
   - Display "Commit successful" message
   - Display "Haunted codebase stabilized" message
   - Add return to hallway or restart button
   - _Requirements: 11.5, 11.6_
 
-- [ ] 11.7 Write unit tests for Commit Altar
+- [x] 11.7 Write unit tests for Commit Altar
+
   - Test summary screen displays correct text
   - Test checkmarks appear for fixed rooms
   - Test commit button only works when all rooms fixed
   - Test ending sequence displays
   - _Requirements: 11.2, 11.3, 11.5, 11.6_
 
-- [ ] 12. Checkpoint - Ensure all tests pass
+- [x] 12. Checkpoint - Ensure all tests pass
+
+
+
+
+
+
+
+
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 13. Add return navigation to all rooms
