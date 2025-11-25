@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
@@ -8,6 +8,7 @@ import Scene3D from '@/components/Scene3D';
 import Overlay from '@/components/ui/Overlay';
 import Button from '@/components/ui/Button';
 import { useGameState } from '@/store/gameState';
+import { sharedResources } from '@/lib/sharedGeometry';
 import * as THREE from 'three';
 
 interface GCOrb {
@@ -21,12 +22,27 @@ interface MonsterProps {
 
 function Monster({ scale }: MonsterProps) {
   const monsterRef = useRef<THREE.Mesh>(null);
+  const monsterMaterial = useRef(new THREE.MeshStandardMaterial({ 
+    color: '#ff0066', 
+    emissive: '#ff0066', 
+    emissiveIntensity: 0.5 
+  }));
+  
+  // Cleanup material on unmount
+  useEffect(() => {
+    return () => {
+      monsterMaterial.current.dispose();
+    };
+  }, []);
 
   return (
-    <mesh ref={monsterRef} position={[0, 0, 0]} scale={[scale, scale, scale]}>
-      <sphereGeometry args={[1, 32, 32]} />
-      <meshStandardMaterial color="#ff0066" emissive="#ff0066" emissiveIntensity={0.5} />
-    </mesh>
+    <mesh 
+      ref={monsterRef} 
+      position={[0, 0, 0]} 
+      scale={[scale, scale, scale]}
+      geometry={sharedResources.sphereGeometry}
+      material={monsterMaterial.current}
+    />
   );
 }
 
@@ -36,11 +52,26 @@ interface GCOrbComponentProps {
 }
 
 function GCOrbComponent({ orb, onClick }: GCOrbComponentProps) {
+  const orbMaterial = useRef(new THREE.MeshStandardMaterial({ 
+    color: '#00ff00', 
+    emissive: '#00ff00', 
+    emissiveIntensity: 1.5 
+  }));
+  
+  // Cleanup material on unmount
+  useEffect(() => {
+    return () => {
+      orbMaterial.current.dispose();
+    };
+  }, []);
+  
   return (
-    <mesh position={orb.position} onClick={() => onClick(orb.id)}>
-      <sphereGeometry args={[0.3, 16, 16]} />
-      <meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={1.5} />
-    </mesh>
+    <mesh 
+      position={orb.position} 
+      onClick={() => onClick(orb.id)}
+      geometry={sharedResources.gcOrbGeometry}
+      material={orbMaterial.current}
+    />
   );
 }
 
@@ -63,7 +94,7 @@ function MemoryLeakRoomContent({ onSuccess, orbs, setOrbs, scaleRef, setMonsterS
   const markRoomFixed = useGameState((state) => state.markRoomFixed);
 
   useFrame((state, delta) => {
-    // Gradually increase monster scale over time using ref
+    // Gradually increase monster scale over time using ref - frame-rate independent
     scaleRef.current = scaleRef.current + growthRate * delta;
     setMonsterScale(scaleRef.current);
 
@@ -79,17 +110,17 @@ function MemoryLeakRoomContent({ onSuccess, orbs, setOrbs, scaleRef, setMonsterS
       onSuccess();
     }
 
-    // Spawn orbs at intervals if under max limit
+    // Spawn orbs at intervals if under max limit - using delta time for frame-rate independence
     const currentTime = state.clock.getElapsedTime();
     if (currentTime - lastSpawnTime.current >= spawnInterval && orbs.length < maxOrbs) {
       lastSpawnTime.current = currentTime;
       
       // Generate random position around monster - more spread out
       const angle = Math.random() * Math.PI * 2;
-      const distance = 3 + Math.random() * 2.5; // Increased from 2-3 to 3-5.5
+      const distance = 3 + Math.random() * 2.5;
       const x = Math.cos(angle) * distance;
       const z = Math.sin(angle) * distance;
-      const y = -1 + Math.random() * 3; // Increased vertical spread from 2 to 3
+      const y = -1 + Math.random() * 3;
       
       const newOrb: GCOrb = {
         id: `orb-${Date.now()}-${Math.random()}`,

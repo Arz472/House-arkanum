@@ -7,6 +7,7 @@ import Scene3D from '@/components/Scene3D';
 import Overlay from '@/components/ui/Overlay';
 import Button from '@/components/ui/Button';
 import { useGameState } from '@/store/gameState';
+import { sharedResources } from '@/lib/sharedGeometry';
 import * as THREE from 'three';
 
 interface RealOrbProps {
@@ -14,15 +15,25 @@ interface RealOrbProps {
 }
 
 function RealOrb({ position }: RealOrbProps) {
+  const realOrbMaterial = useRef(new THREE.MeshStandardMaterial({ 
+    color: '#00ffff', 
+    emissive: '#00ffff', 
+    emissiveIntensity: 1.5
+  }));
+  
+  // Cleanup material on unmount
+  useEffect(() => {
+    return () => {
+      realOrbMaterial.current.dispose();
+    };
+  }, []);
+  
   return (
-    <mesh position={position}>
-      <sphereGeometry args={[0.3, 32, 32]} />
-      <meshStandardMaterial 
-        color="#00ffff" 
-        emissive="#00ffff" 
-        emissiveIntensity={1.5}
-      />
-    </mesh>
+    <mesh 
+      position={position}
+      geometry={sharedResources.smallSphereGeometry}
+      material={realOrbMaterial.current}
+    />
   );
 }
 
@@ -31,17 +42,27 @@ interface ReflectionOrbProps {
 }
 
 function ReflectionOrb({ position }: ReflectionOrbProps) {
+  const reflectionOrbMaterial = useRef(new THREE.MeshStandardMaterial({ 
+    color: '#ff00ff', 
+    emissive: '#ff00ff', 
+    emissiveIntensity: 1.5,
+    transparent: true,
+    opacity: 0.8
+  }));
+  
+  // Cleanup material on unmount
+  useEffect(() => {
+    return () => {
+      reflectionOrbMaterial.current.dispose();
+    };
+  }, []);
+  
   return (
-    <mesh position={position}>
-      <sphereGeometry args={[0.3, 32, 32]} />
-      <meshStandardMaterial 
-        color="#ff00ff" 
-        emissive="#ff00ff" 
-        emissiveIntensity={1.5}
-        transparent
-        opacity={0.8}
-      />
-    </mesh>
+    <mesh 
+      position={position}
+      geometry={sharedResources.smallSphereGeometry}
+      material={reflectionOrbMaterial.current}
+    />
   );
 }
 
@@ -111,8 +132,10 @@ function MirrorRoomContent({
     if (positionHistory.current.length > 0) {
       const delayedPos = positionHistory.current[0];
       // Apply offset to make it look "possessed" - slightly off
-      const offsetX = delayedPos[0] + Math.sin(Date.now() * 0.001) * 0.5;
-      const offsetY = delayedPos[1] + Math.cos(Date.now() * 0.0015) * 0.3;
+      // Use state.clock for frame-rate independent animation
+      const time = state.clock.getElapsedTime();
+      const offsetX = delayedPos[0] + Math.sin(time) * 0.5;
+      const offsetY = delayedPos[1] + Math.cos(time * 1.5) * 0.3;
       setReflectionOrbPosition([offsetX, offsetY, -4]); // Behind mirror plane
       
       // Calculate distance between real and reflection orbs (in 2D, ignoring Z)
@@ -120,7 +143,7 @@ function MirrorRoomContent({
       const dy = realOrbPosition[1] - offsetY;
       const distance2D = Math.sqrt(dx * dx + dy * dy);
       
-      // Check if orbs are synced
+      // Check if orbs are synced - using delta for frame-rate independent timing
       if (distance2D < syncThreshold) {
         syncTimerRef.current += delta;
         

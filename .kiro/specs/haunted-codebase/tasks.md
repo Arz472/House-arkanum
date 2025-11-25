@@ -620,35 +620,56 @@
 
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 13. Add return navigation to all rooms
-- [ ] 13.1 Implement return button functionality
+- [x] 13. Add return navigation to all rooms
+
+
+
+
+- [x] 13.1 Implement return button functionality
+
+
   - Add return button to each room's success overlay
   - Navigate to "/" (Hallway Hub) on click
   - _Requirements: 4.5_
 
-- [ ] 13.2 Write property test for return navigation
+- [x] 13.2 Write property test for return navigation
+
+
   - **Property 6: Room completion return navigation**
   - **Validates: Requirements 4.5**
 
-- [ ] 14. Implement performance optimizations
-- [ ] 14.1 Add geometry and material reuse
+- [x] 14. Implement performance optimizations
+
+
+
+
+
+- [x] 14.1 Add geometry and material reuse
+
+
   - Create shared geometry objects
   - Create shared material objects
   - Use instances for repeated objects (doors, candles, orbs)
   - _Requirements: 2.7_
 
-- [ ] 14.2 Optimize useFrame usage
+- [x] 14.2 Optimize useFrame usage
+
+
   - Review all useFrame hooks for efficiency
   - Throttle expensive calculations
   - Use delta time for frame-rate independent animations
   - _Requirements: 2.1_
 
-- [ ] 14.3 Add asset disposal on unmount
+- [x] 14.3 Add asset disposal on unmount
+
+
   - Implement cleanup in useEffect for all geometries
   - Dispose materials and textures properly
   - _Requirements: 2.1_
 
-- [ ] 14.4 Write property tests for performance constraints
+- [x] 14.4 Write property tests for performance constraints
+
+
   - **Property 1: Scene triangle budget compliance**
   - **Property 2: Scene lighting limit compliance**
   - **Property 3: Scene asset size compliance**

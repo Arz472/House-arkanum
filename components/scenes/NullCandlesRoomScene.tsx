@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFrame } from '@react-three/fiber';
 import Scene3D from '@/components/Scene3D';
@@ -8,6 +8,7 @@ import Overlay from '@/components/ui/Overlay';
 import Button from '@/components/ui/Button';
 import HUD from '@/components/ui/HUD';
 import { useGameState } from '@/store/gameState';
+import { sharedResources } from '@/lib/sharedGeometry';
 import * as THREE from 'three';
 
 interface Candle {
@@ -21,32 +22,40 @@ interface CandleProps {
 }
 
 function CandleObject({ candle }: CandleProps) {
+  // Reuse shared geometries
+  const candleBodyMaterial = useRef(new THREE.MeshStandardMaterial({ color: '#f5e6d3', roughness: 0.7 }));
+  const flameMaterial = useRef(new THREE.MeshStandardMaterial({
+    color: '#ff8800',
+    emissive: '#ff8800',
+    emissiveIntensity: 2
+  }));
+  const wickMaterial = useRef(new THREE.MeshStandardMaterial({ color: '#222222' }));
+  
+  // Cleanup materials on unmount
+  useEffect(() => {
+    return () => {
+      candleBodyMaterial.current.dispose();
+      flameMaterial.current.dispose();
+      wickMaterial.current.dispose();
+    };
+  }, []);
+  
   return (
     <group position={candle.position}>
-      {/* Candle body */}
-      <mesh position={[0, 0.3, 0]}>
-        <cylinderGeometry args={[0.15, 0.15, 0.6, 8]} />
-        <meshStandardMaterial color="#f5e6d3" roughness={0.7} />
-      </mesh>
+      {/* Candle body - using shared geometry */}
+      <mesh position={[0, 0.3, 0]} geometry={sharedResources.candleBodyGeometry} material={candleBodyMaterial.current} />
       
       {/* Wick/flame area */}
       {candle.isLit ? (
         <>
           <mesh position={[0, 0.7, 0]}>
             <sphereGeometry args={[0.1, 8, 8]} />
-            <meshStandardMaterial
-              color="#ff8800"
-              emissive="#ff8800"
-              emissiveIntensity={2}
-            />
+            <primitive object={flameMaterial.current} attach="material" />
           </mesh>
           <pointLight position={[0, 0.7, 0]} intensity={1.5} distance={3} color="#ff8800" />
         </>
       ) : (
-        <mesh position={[0, 0.65, 0]}>
-          <cylinderGeometry args={[0.02, 0.02, 0.1, 4]} />
-          <meshStandardMaterial color="#222222" />
-        </mesh>
+        <mesh position={[0, 0.65, 0]} geometry={sharedResources.candleWickGeometry} material={wickMaterial.current} />
       )}
     </group>
   );
@@ -68,6 +77,18 @@ function FlameOrb({ position, onDrag }: FlameOrbProps) {
   const planeRef = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
   const intersectionPoint = useRef(new THREE.Vector3());
   const raycaster = useRef(new THREE.Raycaster());
+  const flameMaterial = useRef(new THREE.MeshStandardMaterial({
+    color: '#ffaa00',
+    emissive: '#ffaa00',
+    emissiveIntensity: 3
+  }));
+  
+  // Cleanup material on unmount
+  useEffect(() => {
+    return () => {
+      flameMaterial.current.dispose();
+    };
+  }, []);
 
   // Handle scroll wheel for Z-axis movement
   useState(() => {
@@ -129,13 +150,9 @@ function FlameOrb({ position, onDrag }: FlameOrbProps) {
       position={position}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
+      geometry={sharedResources.flameOrbGeometry}
+      material={flameMaterial.current}
     >
-      <sphereGeometry args={[0.3, 16, 16]} />
-      <meshStandardMaterial
-        color="#ffaa00"
-        emissive="#ffaa00"
-        emissiveIntensity={3}
-      />
       <pointLight intensity={2} distance={4} color="#ffaa00" />
     </mesh>
   );
@@ -158,7 +175,8 @@ function CameraController() {
 
   useFrame(({ camera }) => {
     // Calculate target rotation based on mouse position
-    targetRotation.current.y = mousePos.current.x * 0.1;
+    // Negate x to fix left/right inversion - mouse right = camera right
+    targetRotation.current.y = -mousePos.current.x * 0.1;
     targetRotation.current.x = mousePos.current.y * 0.05;
 
     // Smoothly interpolate camera rotation
@@ -190,8 +208,13 @@ function NullCandlesRoomContent({ onSuccess, onCandleCountChange }: NullCandlesR
     setFlamePosition(newPosition);
   };
 
-  // Check proximity and light candles
+  // Check proximity and light candles - throttled for performance
+  const frameCount = useRef(0);
   useFrame(() => {
+    // Throttle proximity checks to every 3rd frame for performance
+    frameCount.current++;
+    if (frameCount.current % 3 !== 0) return;
+    
     setCandles((currentCandles) => {
       let updated = false;
       const newCandles = currentCandles.map((candle) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFrame, useThree } from '@react-three/fiber';
 import Scene3D from '@/components/Scene3D';
@@ -282,7 +282,8 @@ function CameraController({ isWalking, isWalkingBack, isWalkingToAltar, targetPo
     } else {
       // Normal parallax behavior when not walking
       // Calculate target rotation based on mouse position
-      targetRotation.current.y = mousePos.current.x * 0.1;
+      // Negate x to fix left/right inversion - mouse right = camera right
+      targetRotation.current.y = -mousePos.current.x * 0.1;
       targetRotation.current.x = mousePos.current.y * 0.05;
       
       // Smoothly interpolate camera rotation
@@ -420,6 +421,52 @@ export default function HallwayScene() {
   const [popupRoute, setPopupRoute] = useState<string | null>(null);
   const [popupRoomName, setPopupRoomName] = useState<string | null>(null);
   const [isWalkingBack, setIsWalkingBack] = useState(false);
+  const [showTitleCard, setShowTitleCard] = useState(() => {
+    // Only show title card on first visit
+    if (typeof window !== 'undefined') {
+      return !sessionStorage.getItem('hasSeenTitleCard');
+    }
+    return true;
+  });
+  const [fadeOut, setFadeOut] = useState(false);
+  
+  // Background music
+  useEffect(() => {
+    const audio = new Audio('/KIRO_ASSETS/Music/Mysterious Lights.mp3');
+    audio.loop = true;
+    audio.volume = 0.5;
+    
+    // Don't play until title card is dismissed
+    let audioStarted = false;
+    
+    const startAudio = () => {
+      if (!audioStarted && !showTitleCard) {
+        audioStarted = true;
+        audio.play().catch(err => console.log('Audio play error:', err));
+      }
+    };
+    
+    // Start audio when title card is dismissed
+    if (!showTitleCard) {
+      startAudio();
+    }
+    
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [showTitleCard]);
+  
+  const handleStartGame = () => {
+    setFadeOut(true);
+    // Mark that user has seen the title card
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('hasSeenTitleCard', 'true');
+    }
+    setTimeout(() => {
+      setShowTitleCard(false);
+    }, 1000);
+  };
   
   const handleShowPopup = (route: string, roomName: string) => {
     setPopupRoute(route);
@@ -446,6 +493,32 @@ export default function HallwayScene() {
   
   return (
     <div className="w-full h-screen relative">
+      {/* Title Card */}
+      {showTitleCard && (
+        <div 
+          className={`absolute inset-0 bg-black z-50 flex flex-col items-center justify-center transition-opacity duration-1000 ${
+            fadeOut ? 'opacity-0' : 'opacity-100'
+          }`}
+        >
+          <h1 className="text-6xl font-bold mb-4 text-cyan-400 font-mono animate-pulse">
+            House Arkanum
+          </h1>
+          <h2 className="text-3xl font-bold mb-8 text-gray-300 font-mono">
+            Haunted Codebase
+          </h2>
+          <p className="text-xl text-gray-400 font-mono mb-12 text-center max-w-2xl px-4">
+            Debug the cursed code and escape the haunted mansion.<br />
+            Each room holds a different bug... and a different horror.
+          </p>
+          <button
+            onClick={handleStartGame}
+            className="bg-cyan-600 hover:bg-cyan-500 text-white font-mono font-bold py-4 px-8 rounded text-xl transition-colors animate-pulse"
+          >
+            Enter the House
+          </button>
+        </div>
+      )}
+      
       <Scene3D cameraPosition={[0, 1, 3]} cameraFov={75}>
         <HallwayContent 
           onShowPopup={handleShowPopup}
@@ -469,11 +542,28 @@ export default function HallwayScene() {
         <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-auto">
           <div className="bg-gray-900 border-2 border-cyan-400 p-8 rounded-lg shadow-2xl max-w-md">
             <h2 className="text-2xl font-bold text-cyan-400 font-mono mb-4">
-              Enter {popupRoomName}?
+              {popupRoomName === 'Loop' ? 'The Infinite Loop' : `Enter ${popupRoomName}?`}
             </h2>
-            <p className="text-gray-300 font-mono mb-6">
-              Are you ready to face this bug?
-            </p>
+            
+            {/* Show riddle for Loop room */}
+            {popupRoomName === 'Loop' ? (
+              <>
+                <p className="text-gray-300 font-mono mb-6 italic text-center leading-relaxed">
+                  "I circle endlessly, never at rest,<br />
+                  Keep your eyes on me, or face the test.<br />
+                  Click me thrice to break my chain,<br />
+                  Look away too long, and I'll cause you pain."
+                </p>
+                <p className="text-gray-400 font-mono mb-6 text-sm text-center">
+                  Are you ready to break the loop?
+                </p>
+              </>
+            ) : (
+              <p className="text-gray-300 font-mono mb-6">
+                Are you ready to face this bug?
+              </p>
+            )}
+            
             <div className="flex gap-4">
               <button
                 onClick={handleEnterRoom}

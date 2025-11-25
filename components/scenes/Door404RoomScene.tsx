@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFrame } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
@@ -8,6 +8,7 @@ import Scene3D from '@/components/Scene3D';
 import Overlay from '@/components/ui/Overlay';
 import Button from '@/components/ui/Button';
 import { useGameState } from '@/store/gameState';
+import { sharedResources } from '@/lib/sharedGeometry';
 import * as THREE from 'three';
 
 interface Rune {
@@ -29,6 +30,18 @@ function RuneObject({ rune, onDrag }: RuneObjectProps) {
   const raycaster = useRef(new THREE.Raycaster());
   const planeRef = useRef(new THREE.Plane(new THREE.Vector3(0, 0, 1), 2));
   const intersectionPoint = useRef(new THREE.Vector3());
+  const runeMaterial = useRef(new THREE.MeshStandardMaterial({
+    color: '#666666',
+    emissive: '#000000',
+    emissiveIntensity: 0
+  }));
+  
+  // Cleanup material on unmount
+  useEffect(() => {
+    return () => {
+      runeMaterial.current.dispose();
+    };
+  }, []);
 
   const MIN_X = -3;
   const MAX_X = 3;
@@ -60,6 +73,21 @@ function RuneObject({ rune, onDrag }: RuneObjectProps) {
     e.target.releasePointerCapture(e.pointerId);
   };
 
+  // Update material based on hover/drag state
+  useFrame(() => {
+    if (runeMaterial.current) {
+      if (hovered || isDragging) {
+        runeMaterial.current.color.setHex(0x88ff88);
+        runeMaterial.current.emissive.setHex(0x44ff44);
+        runeMaterial.current.emissiveIntensity = 0.5;
+      } else {
+        runeMaterial.current.color.setHex(0x666666);
+        runeMaterial.current.emissive.setHex(0x000000);
+        runeMaterial.current.emissiveIntensity = 0;
+      }
+    }
+  });
+  
   return (
     <group ref={runeRef} position={[rune.position, -0.5, 2]}>
       <mesh
@@ -67,14 +95,9 @@ function RuneObject({ rune, onDrag }: RuneObjectProps) {
         onPointerUp={handlePointerUp}
         onPointerEnter={() => setHovered(true)}
         onPointerLeave={() => setHovered(false)}
-      >
-        <cylinderGeometry args={[0.4, 0.4, 0.1, 16]} />
-        <meshStandardMaterial
-          color={hovered || isDragging ? '#88ff88' : '#666666'}
-          emissive={hovered || isDragging ? '#44ff44' : '#000000'}
-          emissiveIntensity={hovered || isDragging ? 0.5 : 0}
-        />
-      </mesh>
+        geometry={sharedResources.runeGeometry}
+        material={runeMaterial.current}
+      />
       
       {/* Symbol on rune */}
       <Text
@@ -173,7 +196,8 @@ function CameraController() {
   });
 
   useFrame(({ camera }) => {
-    targetRotation.current.y = mousePos.current.x * 0.08;
+    // Negate x to fix left/right inversion - mouse right = camera right
+    targetRotation.current.y = -mousePos.current.x * 0.08;
     targetRotation.current.x = mousePos.current.y * 0.05;
 
     camera.rotation.y += (targetRotation.current.y - camera.rotation.y) * 0.05;
@@ -208,8 +232,13 @@ function Door404RoomContent({ onSuccess }: Door404RoomContentProps) {
     );
   };
 
-  // Check if runes are in correct order
+  // Check if runes are in correct order - throttled for performance
+  const frameCount = useRef(0);
   useFrame(() => {
+    // Throttle validation checks to every 5th frame for performance
+    frameCount.current++;
+    if (frameCount.current % 5 !== 0) return;
+    
     if (!isDoorOpen && !hasTriggeredSuccess) {
       const POSITION_TOLERANCE = 0.5;
       
