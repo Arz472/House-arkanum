@@ -163,7 +163,21 @@ interface InteractiveObject {
 interface Candle {
   id: string;
   position: Vector3;
-  isLit: boolean;
+  isReal: boolean;
+  flickerPattern: 'natural' | 'loop' | 'reversed';
+  shadowBehavior: 'correct' | 'none' | 'inverted';
+  proximityResponse: 'brighten' | 'dim';
+}
+
+// Null Candles room state machine
+type NullCandlesState = 'idle' | 'probing' | 'choosing' | 'jumpscare' | 'resolved';
+
+interface NullCandlesRoomState {
+  state: NullCandlesState;
+  realCandleIndex: number;
+  selectedCandleIndex: number | null;
+  orbPosition: Vector3;
+  failureCount: number;
 }
 
 // Rune state for 404 room
@@ -205,6 +219,108 @@ interface MirrorState {
   syncTimer: number;
 }
 ```
+
+## Null Candles Room: Advanced Riddle Design
+
+The Null Candles Room implements a logic puzzle where players must deduce which of three candles is "real" using multiple environmental clues. This design creates tension through consequences (jumpscare) while maintaining fairness through discoverable logic.
+
+### Puzzle Mechanics
+
+**Three Candles System**:
+- Exactly 3 candles arranged in an arc, equidistant from center
+- One designated as "real" (randomly selected at room start)
+- Two designated as "fake/null" references
+- All use identical geometry to prevent visual identification
+
+**Flame Orb Interaction**:
+- Draggable orb constrained to screen-space plane in front of camera
+- Used to "test" each candle by proximity
+- Release over a candle to "choose" it
+- Acts as the player's tool for investigation
+
+### Clue Layer System
+
+**Layer 1: Shadow Behavior**
+- Real candle: Stable shadow in correct direction from main light
+- Fake candle A: No shadow (castShadow = false)
+- Fake candle B: Shadow in wrong direction (inverted light angle)
+- Implementation: Use Three.js shadow system with per-candle light sources
+
+**Layer 2: Flicker Patterns**
+- Real candle: Natural random flicker using Perlin noise or random walk
+- Fake candle A: Perfect sine wave loop (obvious repetition)
+- Fake candle B: Reversed intensity curve (brightens when should dim)
+- Implementation: Animate emissiveIntensity in useFrame with different math functions
+
+**Layer 3: Proximity Response**
+- Real candle: Brightens when orb nearby (intensity +20%, light distance +0.5)
+- Fake candles: Dim when orb nearby (intensity -20%) OR orb dims (emissive -30%)
+- Implementation: Distance check in useFrame, lerp material properties
+
+**Layer 4: Audio (Optional)**
+- Real candle: Warm hum or stable whisper (positional audio)
+- Fake candles: Reversed whispers, static, or cold tones
+- Volume increases with proximity
+- Implementation: Three.js PositionalAudio with distance model
+
+### State Machine
+
+```typescript
+type NullCandlesState = 'idle' | 'probing' | 'choosing' | 'jumpscare' | 'resolved';
+
+// State transitions:
+// idle -> probing (on orb drag start)
+// probing -> choosing (on orb release over candle)
+// choosing -> resolved (if correct candle)
+// choosing -> jumpscare (if wrong candle)
+// jumpscare -> idle (after sequence completes)
+```
+
+### Jumpscare Sequence
+
+**Timing and Effects**:
+1. **Instant (frame 0)**: Orb snaps to candle position, candle flashes white
+2. **0.15-0.25s**: Room blackout (ambient/directional lights intensity -> 0.05)
+3. **During blackout**: Spawn jumpscare entity at camera position + forward offset
+4. **0.5-1.0s**: Display jumpscare entity with intense emissive material
+5. **Camera effect**: Small random jitter (±0.05 units on x/y)
+6. **Audio**: Short scream or static SFX (optional)
+7. **Cleanup**: Remove entity, restore lights, reset orb position
+8. **Visual feedback**: Turn chosen fake candle black for 1s, then restore
+
+**Jumpscare Entity**:
+- GLB model loaded via useGLTF with fallback to placeholder (large sphere with scary emissive)
+- Positioned 2-3 units in front of camera
+- Intense emissive material (white or red, intensity 5-10)
+- Optional: slight scale animation (1.0 -> 1.2 -> 1.0)
+
+### Success Sequence
+
+**Effects**:
+1. Real candle flares bright (emissiveIntensity * 3)
+2. Ambient light increases (intensity 0.2 -> 0.5)
+3. Fake candles fade out over 1s (opacity 1 -> 0)
+4. Display success overlay: "Reference restored" or "Null resolved"
+5. Mark room as fixed in game state
+6. Show return button
+
+### Performance Considerations
+
+- Only 3 candles (low poly count)
+- Jumpscare entity only spawned when needed, immediately disposed after
+- Shadow calculations limited to 2 lights max (main directional + one candle)
+- Flicker animations use simple math (no expensive noise functions unless optimized)
+- Audio files kept under 100KB each
+
+### Fairness and Discoverability
+
+The puzzle is designed so careful players can deduce the answer:
+- Multiple independent clue layers (shadow, flicker, proximity, audio)
+- Each clue layer provides consistent information
+- Real candle always behaves "naturally" and "physically correct"
+- Fake candles always violate reality in observable ways
+- No time pressure or hidden information
+- Jumpscare provides clear feedback and allows retry
 
 ## Correctness Properties
 
@@ -252,62 +368,74 @@ interface MirrorState {
 **Validates: Requirements 6.3**
 
 ### Property 11: Flame drag updates position
-*For any* drag event on the flame orb in the Null Candles Room, the flame's position should update to follow the drag coordinates.
-**Validates: Requirements 7.4**
+*For any* drag event on the flame orb in the Null Candles Room, the flame's position should update to follow the drag coordinates constrained to the camera plane.
+**Validates: Requirements 7.6**
 
-### Property 12: Candle lighting by proximity
-*For any* unlit candle in the Null Candles Room, when the flame orb position is within the threshold distance of that candle, the candle should change to lit state.
-**Validates: Requirements 7.5**
+### Property 12: Real candle proximity brightening
+*For any* real candle in the Null Candles Room, when the flame orb position is within the proximity threshold of that candle, the candle's light intensity should increase.
+**Validates: Requirements 7.11**
 
-### Property 13: Candle count HUD accuracy
-*For any* candle state in the Null Candles Room, the HUD should display a count that exactly matches the number of lit candles.
-**Validates: Requirements 7.7**
+### Property 13: Fake candle proximity dimming
+*For any* fake candle in the Null Candles Room, when the flame orb position is within the proximity threshold of that candle, the candle should dim or the orb brightness should decrease.
+**Validates: Requirements 7.12**
 
-### Property 14: Rune horizontal drag constraint
+### Property 14: Correct candle selection triggers success
+*For any* state where the flame orb is released overlapping the real candle, the room state should transition to resolved and display success overlay.
+**Validates: Requirements 7.13, 7.14, 7.15**
+
+### Property 15: Wrong candle selection triggers jumpscare
+*For any* state where the flame orb is released overlapping a fake candle, the room state should transition to jumpscare and execute the jumpscare sequence.
+**Validates: Requirements 7.16, 7.17, 7.18, 7.19**
+
+### Property 16: Jumpscare resets puzzle state
+*For any* completed jumpscare sequence, the flame orb should return to starting position and the room should return to probing state.
+**Validates: Requirements 7.20, 7.21**
+
+### Property 17: Rune horizontal drag constraint
 *For any* rune in the 404 Room, dragging that rune should update only its x-position within the defined track constraints.
 **Validates: Requirements 8.4**
 
-### Property 15: Monster growth over time
+### Property 18: Monster growth over time
 *For any* time interval in the Memory Leak Room, the monster's scale should increase monotonically (never decrease without player interaction).
 **Validates: Requirements 9.2**
 
-### Property 16: GC orb count limit
+### Property 19: GC orb count limit
 *For any* point in time in the Memory Leak Room, the number of active GC orbs should be less than or equal to 5.
 **Validates: Requirements 9.3**
 
-### Property 17: Orb collection reduces monster
+### Property 20: Orb collection reduces monster
 *For any* GC orb click in the Memory Leak Room, the orb count should decrease by 1 and the monster's scale should decrease.
 **Validates: Requirements 9.4**
 
-### Property 18: Memory HUD proportional to monster
+### Property 21: Memory HUD proportional to monster
 *For any* monster scale value in the Memory Leak Room, the HUD memory bar value should be proportional to the monster's current scale.
 **Validates: Requirements 9.6**
 
-### Property 19: Real orb follows mouse
+### Property 22: Real orb follows mouse
 *For any* mouse position change in the Mirror Room, the real orb position should update to correspond to the mouse coordinates.
 **Validates: Requirements 10.4**
 
-### Property 20: Mirror sync threshold and duration
+### Property 23: Mirror sync threshold and duration
 *For any* state in the Mirror Room where the distance between real orb and reflection orb is less than the threshold for 3 seconds or more, the success state should become true.
 **Validates: Requirements 10.5**
 
-### Property 21: Altar checkmarks match game state
+### Property 24: Altar checkmarks match game state
 *For any* room marked as fixed in game state, the Commit Altar should display a corresponding checkmark.
 **Validates: Requirements 11.3**
 
-### Property 22: Audio file size compliance
+### Property 25: Audio file size compliance
 *For any* loaded audio file, the file size should be below a reasonable threshold (e.g., 500 KB for ambient loops, 100 KB for SFX).
 **Validates: Requirements 12.3**
 
-### Property 23: Room completion updates game state
+### Property 26: Room completion updates game state
 *For any* room puzzle completion event, the game state should update to mark that specific room as fixed (isFixed = true).
 **Validates: Requirements 6.6, 7.8, 8.8, 9.7, 10.7, 14.2**
 
-### Property 24: Game state persistence across navigation
+### Property 27: Game state persistence across navigation
 *For any* navigation event between routes, all game state values should remain unchanged after the navigation completes.
 **Validates: Requirements 14.3**
 
-### Property 25: Commit requires all rooms fixed
+### Property 28: Commit requires all rooms fixed
 *For any* attempt to commit at the Altar, the commit action should only be allowed when all five rooms in game state are marked as fixed.
 **Validates: Requirements 14.5**
 
@@ -396,13 +524,16 @@ Unit tests will verify specific examples, edge cases, and integration points:
 
 **Interaction Logic Tests**:
 - Test ghost counter increments correctly on clicks
-- Test candle lighting logic with specific distance values
+- Test candle selection logic with correct and incorrect choices
+- Test jumpscare sequence triggers and completes correctly
+- Test candle proximity responses (brightening/dimming)
 - Test rune ordering validation with known correct/incorrect sequences
 - Test monster scale calculations with specific orb collection counts
 - Test mirror sync timer with specific distance and duration values
 
 **Edge Cases**:
-- Test behavior when all candles start lit
+- Test behavior when wrong candle selected multiple times
+- Test behavior when orb released outside candle proximity
 - Test behavior when monster scale reaches maximum
 - Test behavior when attempting to commit with incomplete rooms
 - Test behavior with rapid repeated clicks on interactive objects
@@ -426,14 +557,15 @@ Property-based tests will verify universal properties across all inputs using **
 - Generate random door selections and verify navigation behavior
 - Generate random room completion states and verify return button presence
 
-**Interaction Properties** (Properties 7-22):
+**Interaction Properties** (Properties 7-23):
 - Generate random mouse positions and verify camera/orb responses
-- Generate random candle configurations and verify lighting logic
+- Generate random candle configurations and verify selection logic
+- Generate random candle proximity scenarios and verify brightness responses
 - Generate random rune positions and verify drag constraints
 - Generate random monster states and verify growth/shrinkage behavior
 - Generate random mirror sync scenarios and verify success conditions
 
-**State Management Properties** (Properties 23-25):
+**State Management Properties** (Properties 26-28):
 - Generate random room completion sequences and verify state updates
 - Generate random navigation sequences and verify state persistence
 - Generate random game states and verify commit validation
@@ -655,8 +787,9 @@ Each room includes:
 
 **Null Candles Room**:
 - Room environment - ~8k triangles
-- Candle model (reused 5-10x) - ~1k triangles each
+- Candle model (reused 3x) - ~1k triangles each
 - Flame orb - sphere primitive with emissive material
+- Jumpscare entity GLB - ~5k triangles (placeholder mesh until asset loaded)
 
 **404 Room**:
 - Corridor environment - ~8k triangles

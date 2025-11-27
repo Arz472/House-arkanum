@@ -104,18 +104,32 @@ The Haunted Codebase of House Arkanum is a browser-based interactive 3D experien
 
 ### Requirement 7: Null Pointer Candles Room
 
-**User Story:** As a player, I want to light unlit candles by dragging a flame, so that I can resolve null references through a lighting puzzle.
+**User Story:** As a player, I want to deduce which candle is real using environmental clues and test them with a flame orb, so that I can resolve null references through a logic puzzle with consequences for wrong choices.
 
 #### Acceptance Criteria
 
-1. THE System SHALL render a low-poly room with stone or brick walls and wooden floor
-2. THE System SHALL display multiple candles using a reused low-poly candle model
-3. THE System SHALL initialize some candles as lit with emissive material and some as unlit
-4. THE System SHALL provide a draggable flame orb that the player can control
-5. WHEN the flame overlaps an unlit candle THEN the System SHALL change that candle to lit state with emissive material
-6. WHEN all candles are lit THEN the System SHALL display overlay text "Null references resolved" with a return button
-7. THE System SHALL display a HUD showing "Candles lit: X / Y" count
-8. WHEN all candles are lit THEN the System SHALL mark this room as fixed in global game state
+1. THE System SHALL render a dark low-poly room with muted grey or brown walls, floor, and ceiling
+2. THE System SHALL display exactly three interactive candles arranged in an arc at equal distances from center
+3. THE System SHALL designate one candle as real and two candles as fake null references
+4. THE System SHALL provide a draggable flame orb that the player can control in screen space
+5. THE System SHALL display intro text "The Null Candles" with subtitle "Three candles flicker in the darkness. One holds the truth, but which one is real?"
+6. WHEN the flame orb is dragged THEN the System SHALL update the orb position constrained to a plane in front of the camera
+7. THE System SHALL render the real candle with stable physically plausible shadows matching the main light direction
+8. THE System SHALL render fake candles with incorrect shadow behavior including no shadow or wrong direction shadows
+9. THE System SHALL apply natural random flicker to the real candle light intensity
+10. THE System SHALL apply unnatural flicker patterns to fake candles including perfect loops or reversed curves
+11. WHEN the flame orb is near the real candle THEN the System SHALL brighten the candle and increase its light radius
+12. WHEN the flame orb is near a fake candle THEN the System SHALL dim the candle or reduce the orb brightness
+13. WHEN the player releases the flame orb overlapping the real candle THEN the System SHALL trigger success sequence
+14. WHEN success is triggered THEN the System SHALL brighten the room and fade out fake candles
+15. WHEN success is triggered THEN the System SHALL display overlay text "Reference restored" or "Null resolved" with a return button
+16. WHEN the player releases the flame orb overlapping a fake candle THEN the System SHALL trigger jumpscare sequence
+17. WHEN jumpscare is triggered THEN the System SHALL flash the candle white and fade room to blackout for 0.15 to 0.25 seconds
+18. WHEN jumpscare is triggered THEN the System SHALL spawn a jumpscare entity GLB model in front of camera with intense lighting for 0.5 to 1.0 seconds
+19. WHEN jumpscare is triggered THEN the System SHALL apply camera shake or jitter effect
+20. WHEN jumpscare sequence completes THEN the System SHALL reset the flame orb to starting position and restore room lighting
+21. WHEN jumpscare sequence completes THEN the System SHALL turn the chosen fake candle black temporarily before restoring its fake behavior
+22. WHEN success is triggered THEN the System SHALL mark this room as fixed in global game state
 
 ### Requirement 8: 404 Door Room
 

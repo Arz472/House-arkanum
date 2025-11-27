@@ -53,8 +53,8 @@
 - [x] 1.6 Write property test for game state structure
 
 
-  - **Property 23: Room completion updates game state**
-  - **Validates: Requirements 6.6, 7.8, 8.8, 9.7, 10.7, 14.2**
+  - **Property 26: Room completion updates game state**
+  - **Validates: Requirements 6.6, 7.22, 8.8, 9.7, 10.7, 14.2**
 
 - [x] 1.7 Write unit tests for game state store
 
@@ -253,85 +253,149 @@
   - Test game state updates when ghost disappears
   - _Requirements: 6.4, 6.5, 6.6_
 
-- [x] 6. Implement Null Pointer Candles Room
+- [x] 6. Implement Advanced Null Candles Room (Riddle Variant)
 
 
 
 
 
-- [x] 6.1 Create NullCandlesRoom scene with placeholder geometry
+- [x] 6.1 Create NullCandlesRoom scene with dark atmosphere
 
 
-  - Create room using box geometries
-  - Add stone/brick wall materials
-  - Set up lighting
+  - Create dark rectangular room using box geometries
+  - Use muted grey/brown materials for walls, floor, ceiling
+  - Set up very dim lighting (1 ambient at 0.2 intensity + 1 directional at 0.3)
+  - Add subtle fog effect
   - _Requirements: 7.1_
 
-- [x] 6.2 Create candle objects with lit/unlit states
+- [x] 6.2 Create three candle system with real/fake designation
 
-
-  - Create candle using cylinder placeholder
-  - Initialize array of 5-10 candles
-  - Set some candles to lit (emissive material) and some to unlit
+  - Create 3 candles using cylinder placeholder geometry
+  - Position candles in arc formation, equidistant from center
+  - Randomly designate one as real, two as fake at room initialization
+  - Use identical geometry for all three candles
   - _Requirements: 7.2, 7.3_
 
-- [x] 6.3 Implement draggable flame orb
+- [x] 6.3 Implement shadow behavior clue layer
 
+  - Add point light to real candle with correct shadow casting
+  - Configure fake candle A with no shadow (castShadow = false)
+  - Configure fake candle B with inverted shadow direction
+  - Ensure shadows are visible on floor
+  - _Requirements: 7.7, 7.8_
 
-  - Create flame orb using sphere with emissive material
-  - Implement drag controls using drei's `DragControls` or custom implementation
-  - Update flame position on drag
-  - _Requirements: 7.4_
+- [x] 6.4 Implement flicker behavior clue layer
 
-- [x] 6.4 Write property test for flame drag
+  - Add natural random flicker to real candle using Perlin noise or random walk
+  - Add perfect sine wave loop flicker to fake candle A
+  - Add reversed intensity curve flicker to fake candle B
+  - Animate emissiveIntensity in useFrame
+  - _Requirements: 7.9, 7.10_
+
+- [x] 6.5 Implement draggable flame orb with screen-space constraints
+
+  - Create flame orb using sphere with bright emissive material
+  - Implement pointer-based drag controls
+  - Constrain orb movement to plane in front of camera
+  - Track orb position in state
+  - _Requirements: 7.4, 7.6_
+
+- [x] 6.6 Write property test for flame drag
 
 
   - **Property 11: Flame drag updates position**
-  - **Validates: Requirements 7.4**
+  - **Validates: Requirements 7.6**
 
-- [x] 6.5 Implement candle lighting by proximity
+- [x] 6.7 Implement proximity response clue layer
 
+  - Check distance between orb and each candle in useFrame
+  - Brighten real candle when orb is near (intensity +20%, light distance +0.5)
+  - Dim fake candles when orb is near (intensity -20%)
+  - Use lerp for smooth transitions
+  - _Requirements: 7.11, 7.12_
 
-  - Check distance between flame and each unlit candle in `useFrame`
-  - When distance < threshold, change candle to lit state
-  - Update candle material to emissive
-  - _Requirements: 7.5_
+- [x] 6.8 Write property tests for proximity responses
 
-- [x] 6.6 Write property test for candle lighting
+  - **Property 12: Real candle proximity brightening**
+  - **Property 13: Fake candle proximity dimming**
+  - **Validates: Requirements 7.11, 7.12**
 
+- [x] 6.9 Implement candle selection logic
 
-  - **Property 12: Candle lighting by proximity**
-  - **Validates: Requirements 7.5**
+  - Detect when orb is released over a candle (proximity check)
+  - Store selected candle index
+  - Transition state machine to 'choosing'
+  - _Requirements: 7.13, 7.16_
 
-- [x] 6.7 Add candle count HUD
+- [x] 6.10 Implement success sequence for correct candle
 
-
-  - Display "Candles lit: X / Y" counter
-  - Update count based on lit candles
-  - _Requirements: 7.7_
-
-- [x] 6.8 Write property test for candle count HUD
-
-
-  - **Property 13: Candle count HUD accuracy**
-  - **Validates: Requirements 7.7**
-
-- [x] 6.9 Implement success condition and game state update
-
-
-  - Check if all candles are lit
-  - Display "Null references resolved" overlay
+  - Check if selected candle is the real one
+  - Flare real candle bright (emissiveIntensity * 3)
+  - Increase ambient light (0.2 -> 0.5)
+  - Fade out fake candles over 1 second
+  - Display "Reference restored" or "Null resolved" overlay
   - Add return button
   - Call `markRoomFixed('nullCandles')`
-  - _Requirements: 7.6, 7.8_
+  - _Requirements: 7.13, 7.14, 7.15, 7.22_
 
-- [x] 6.10 Write unit tests for Null Candles Room
+- [x] 6.11 Write property test for correct selection
 
+  - **Property 14: Correct candle selection triggers success**
+  - **Validates: Requirements 7.13, 7.14, 7.15**
 
-  - Test initial state has both lit and unlit candles
-  - Test all candles lit triggers success overlay
+- [x] 6.12 Implement jumpscare sequence for wrong candle
+
+  - Flash selected candle white for 1 frame
+  - Fade room to blackout (lights intensity -> 0.05) over 0.15-0.25s
+  - Spawn jumpscare entity GLB in front of camera (use placeholder sphere with comment for GLB)
+  - Apply intense emissive material to jumpscare entity
+  - Implement camera shake (small random jitter ±0.05 units)
+  - Display entity for 0.5-1.0 seconds
+  - _Requirements: 7.16, 7.17, 7.18, 7.19_
+
+- [x] 6.13 Write property test for wrong selection
+
+  - **Property 15: Wrong candle selection triggers jumpscare**
+  - **Validates: Requirements 7.16, 7.17, 7.18, 7.19**
+
+- [x] 6.14 Implement jumpscare cleanup and reset
+
+  - Remove/hide jumpscare entity after duration
+  - Restore room lighting to original state
+  - Turn chosen fake candle black for 1 second
+  - Reset fake candle to normal behavior after delay
+  - Move flame orb back to starting position
+  - Transition state back to 'idle'
+  - _Requirements: 7.20, 7.21_
+
+- [x] 6.15 Write property test for jumpscare reset
+
+  - **Property 16: Jumpscare resets puzzle state**
+  - **Validates: Requirements 7.20, 7.21**
+
+- [x] 6.16 Add intro overlay text
+
+  - Display "The Null Candles" title
+  - Display subtitle "Three candles flicker in the darkness. One holds the truth, but which one is real?"
+  - Add hint text "Drag the flame orb to test each candle"
+  - _Requirements: 7.5_
+
+- [ ]* 6.17 Add optional audio clue layer
+  - Source CC0 audio files for warm hum and glitchy sounds
+  - Implement positional audio for real candle (warm hum)
+  - Implement positional audio for fake candles (reversed whispers, static)
+  - Adjust volume based on orb proximity
+  - Keep audio files under 100KB each
+  - _Requirements: 12.1, 12.2_
+
+- [ ]* 6.18 Write unit tests for Null Candles Room
+  - Test exactly 3 candles are rendered
+  - Test one candle is designated as real
+  - Test correct candle selection triggers success
+  - Test wrong candle selection triggers jumpscare
+  - Test jumpscare resets orb position
   - Test game state updates on success
-  - _Requirements: 7.3, 7.6, 7.8_
+  - _Requirements: 7.2, 7.13, 7.16, 7.20, 7.22_
 
 - [x] 7. Implement 404 Door Room
 
@@ -370,7 +434,7 @@
 - [x] 7.5 Write property test for rune drag constraints
 
 
-  - **Property 14: Rune horizontal drag constraint**
+  - **Property 17: Rune horizontal drag constraint**
   - **Validates: Requirements 8.4**
 
 - [x] 7.6 Implement rune order validation and door opening
@@ -428,7 +492,7 @@
 - [x] 9.3 Write property test for monster growth
 
 
-  - **Property 15: Monster growth over time**
+  - **Property 18: Monster growth over time**
   - **Validates: Requirements 9.2**
 
 - [x] 9.4 Implement GC orb spawning system
@@ -442,7 +506,7 @@
 - [x] 9.5 Write property test for orb count limit
 
 
-  - **Property 16: GC orb count limit**
+  - **Property 19: GC orb count limit**
   - **Validates: Requirements 9.3**
 
 - [x] 9.6 Implement orb collection and monster shrinking
@@ -456,7 +520,7 @@
 - [x] 9.7 Write property test for orb collection
 
 
-  - **Property 17: Orb collection reduces monster**
+  - **Property 20: Orb collection reduces monster**
   - **Validates: Requirements 9.4**
 
 - [x] 9.8 Add memory usage HUD bar
@@ -470,7 +534,7 @@
 - [x] 9.9 Write property test for memory HUD
 
 
-  - **Property 18: Memory HUD proportional to monster**
+  - **Property 21: Memory HUD proportional to monster**
   - **Validates: Requirements 9.6**
 
 - [x] 9.10 Implement success condition and game state update
@@ -516,7 +580,7 @@
 - [x] 10.3 Write property test for real orb mouse tracking
 
 
-  - **Property 19: Real orb follows mouse**
+  - **Property 22: Real orb follows mouse**
   - **Validates: Requirements 10.4**
 
 - [x] 10.4 Create reflection orb with delay/offset
@@ -537,7 +601,7 @@
 - [x] 10.6 Write property test for mirror sync
 
 
-  - **Property 20: Mirror sync threshold and duration**
+  - **Property 23: Mirror sync threshold and duration**
   - **Validates: Requirements 10.5**
 
 - [x] 10.7 Add success overlay and game state update
@@ -579,7 +643,7 @@
 - [x] 11.3 Write property test for altar checkmarks
 
 
-  - **Property 21: Altar checkmarks match game state**
+  - **Property 24: Altar checkmarks match game state**
   - **Validates: Requirements 11.3**
 
 - [x] 11.4 Implement commit button with validation
@@ -591,7 +655,7 @@
 
 - [x] 11.5 Write property test for commit validation
 
-  - **Property 25: Commit requires all rooms fixed**
+  - **Property 28: Commit requires all rooms fixed**
   - **Validates: Requirements 14.5**
 
 - [x] 11.6 Add ending sequence
@@ -692,7 +756,7 @@
   - _Requirements: 12.2_
 
 - [ ] 15.3 Write property test for audio file sizes
-  - **Property 22: Audio file size compliance**
+  - **Property 25: Audio file size compliance**
   - **Validates: Requirements 12.3**
 
 - [ ] 16. Implement state persistence
@@ -702,7 +766,7 @@
   - _Requirements: 14.3_
 
 - [ ] 16.2 Write property test for state persistence
-  - **Property 24: Game state persistence across navigation**
+  - **Property 27: Game state persistence across navigation**
   - **Validates: Requirements 14.3**
 
 - [ ] 17. Replace placeholders with GLB models
@@ -755,7 +819,7 @@
 - [ ] 19.2 Run all property-based tests
   - Execute full property test suite with 100+ iterations
   - Fix any failing properties
-  - Verify all 25 properties pass
+  - Verify all 28 properties pass
 
 - [ ] 19.3 Manual testing on target hardware
   - Test on mid-range laptop with integrated graphics
