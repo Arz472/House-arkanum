@@ -11,7 +11,19 @@ import * as THREE from 'three';
 
 
 
-function CandleMonster({ visible, onAnimationComplete }: { visible: boolean; onAnimationComplete: () => void }) {
+function CandleMonster({ 
+  visible, 
+  onAnimationComplete,
+  isInvulnerable,
+  onGhostClick,
+  ghostPosition
+}: { 
+  visible: boolean; 
+  onAnimationComplete: () => void;
+  isInvulnerable: boolean;
+  onGhostClick: () => void;
+  ghostPosition: [number, number, number];
+}) {
   const { scene, animations } = useGLTF('/KIRO_ASSETS/entities/candle monster/Animation_Arise_withSkin.glb');
   const { camera } = useThree();
   
@@ -20,6 +32,7 @@ function CandleMonster({ visible, onAnimationComplete }: { visible: boolean; onA
   const action = useRef<THREE.AnimationAction | null>(null);
   const audioRef = useRef<THREE.PositionalAudio | null>(null);
   const hasPlayedAudio = useRef(false); // Flag to ensure audio only plays once
+  const [hovered, setHovered] = useState(false);
 
   // Set up animation mixer when visible
   useEffect(() => {
@@ -95,27 +108,60 @@ function CandleMonster({ visible, onAnimationComplete }: { visible: boolean; onA
   if (!visible) return null;
 
   return (
-    <group position={[0, 0, -1]} rotation={[0, Math.PI, 0]}>
-      {/* Monster positioned just in front of camera, facing into the room */}
-      <primitive object={scene} scale={2.5} />
+    <group position={ghostPosition} rotation={[0, Math.PI, 0]}>
+      {/* Monster positioned with patrol movement */}
+      <primitive 
+        object={scene} 
+        scale={isInvulnerable ? 2.5 : 2.8} 
+        onClick={(e: any) => {
+          e.stopPropagation();
+          onGhostClick();
+        }}
+        onPointerOver={(e: any) => {
+          e.stopPropagation();
+          setHovered(true);
+          document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={(e: any) => {
+          e.stopPropagation();
+          setHovered(false);
+          document.body.style.cursor = 'default';
+        }}
+      />
       
       {/* Positional audio at monster location */}
       {audioRef.current && (
         <primitive object={audioRef.current} position={[0, 1, 0]} />
       )}
       
-      {/* Eerie red lighting */}
-      <pointLight position={[0, 2, 0]} intensity={3} distance={10} color="#880000" />
-      <pointLight position={[1, 1, 0]} intensity={2} distance={8} color="#660000" />
-      <pointLight position={[-1, 1, 0]} intensity={2} distance={8} color="#660000" />
+      {/* Eerie red lighting - stronger when invulnerable */}
+      <pointLight position={[0, 2, 0]} intensity={isInvulnerable ? 3 : 2} distance={10} color="#880000" />
+      <pointLight position={[1, 1, 0]} intensity={isInvulnerable ? 2 : 1.5} distance={8} color="#660000" />
+      <pointLight position={[-1, 1, 0]} intensity={isInvulnerable ? 2 : 1.5} distance={8} color="#660000" />
       
       <spotLight 
         position={[0, 6, 0]} 
-        intensity={5} 
+        intensity={isInvulnerable ? 5 : 3} 
         angle={0.6} 
         penumbra={0.5} 
         color="#aa0000"
       />
+      
+      {/* Visual indicator when vulnerable (in light) */}
+      {!isInvulnerable && (
+        <mesh position={[0, 2, 0]}>
+          <sphereGeometry args={[0.3, 16, 16]} />
+          <meshBasicMaterial color="#ffaa00" transparent opacity={0.4} />
+        </mesh>
+      )}
+      
+      {/* Hover glow */}
+      {hovered && !isInvulnerable && (
+        <mesh position={[0, 1.5, 0]}>
+          <sphereGeometry args={[1.5, 16, 16]} />
+          <meshBasicMaterial color="#ffff00" transparent opacity={0.2} />
+        </mesh>
+      )}
     </group>
   );
 }
@@ -127,7 +173,11 @@ function LibraryContent({
   onShowStaircasePrompt,
   candleLit,
   onCandleBlowOut,
-  onMonsterAnimationComplete
+  onMonsterAnimationComplete,
+  ghostHealth,
+  onGhostDamage,
+  onMissedClick,
+  flameOrbPosition
 }: { 
   onShowRiddle: (show: boolean) => void;
   onShowWarning: (show: boolean) => void;
@@ -136,10 +186,19 @@ function LibraryContent({
   candleLit: boolean;
   onCandleBlowOut: () => void;
   onMonsterAnimationComplete: () => void;
+  ghostHealth: number;
+  onGhostDamage: () => void;
+  onMissedClick: () => void;
+  flameOrbPosition: [number, number, number];
 }) {
   const { camera } = useThree();
   const mousePos = useRef({ x: 0, y: 0 });
   const targetRotation = useRef({ x: 0, y: 0 });
+  
+  // Ghost patrol state (starts to the left)
+  const [ghostPosition, setGhostPosition] = useState<[number, number, number]>([-3, 0, 0]);
+  const ghostPatrolTime = useRef(0);
+  const [isGhostInLight, setIsGhostInLight] = useState(false);
   
   // Camera animation state
   const [isAnimating, setIsAnimating] = useState(false);
@@ -222,12 +281,59 @@ function LibraryContent({
     if (!candleLit && warningOpacity < 1) {
       setWarningOpacity(Math.min(1, warningOpacity + delta * 0.3)); // Slow fade in
     }
+    
+    // Ghost patrol movement when candle is out
+    if (!candleLit) {
+      ghostPatrolTime.current += delta;
+      
+      // Circular patrol pattern around the room (centered more to the left)
+      const radius = 3;
+      const speed = 0.3;
+      const centerX = -3; // Shift patrol center to the left
+      const centerZ = -4;
+      const x = centerX + Math.sin(ghostPatrolTime.current * speed) * radius;
+      const z = centerZ + Math.cos(ghostPatrolTime.current * speed) * radius;
+      
+      setGhostPosition([x, 0, z]);
+      
+      // Check if ghost is within light radius of flame orb
+      const distance = Math.sqrt(
+        Math.pow(x - flameOrbPosition[0], 2) + 
+        Math.pow(z - flameOrbPosition[2], 2)
+      );
+      
+      const lightRadius = 2.5; // Light radius from flame orb
+      setIsGhostInLight(distance < lightRadius);
+    }
   });
+
+  // Handle ghost click
+  const handleGhostClick = () => {
+    if (isGhostInLight) {
+      onGhostDamage();
+    } else {
+      onMissedClick();
+    }
+  };
 
   return (
     <>
-      {/* Candle Monster - appears behind camera when candle is blown out */}
-      <CandleMonster visible={!candleLit} onAnimationComplete={onMonsterAnimationComplete} />
+      {/* Candle Monster - appears and patrols when candle is blown out */}
+      <CandleMonster 
+        visible={!candleLit} 
+        onAnimationComplete={onMonsterAnimationComplete}
+        isInvulnerable={!isGhostInLight}
+        onGhostClick={handleGhostClick}
+        ghostPosition={ghostPosition}
+      />
+      
+      {/* Flame orb light radius visualization */}
+      {!candleLit && (
+        <mesh position={[flameOrbPosition[0], 0.05, flameOrbPosition[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[2.3, 2.5, 32]} />
+          <meshBasicMaterial color="#ffaa00" transparent opacity={0.5} side={THREE.DoubleSide} />
+        </mesh>
+      )}
       
       {/* Lighting - Different lighting when candle is out to show monster */}
       {candleLit ? (
@@ -715,34 +821,34 @@ function LibraryContent({
           <meshStandardMaterial color="#f0e0c0" roughness={0.8} />
         </mesh>
         
-        {/* Flame orb - only visible when lit */}
-        {candleLit && (
-          <mesh 
-            position={[0.8, 0.62, 0]}
-            onClick={(e) => {
-              e.stopPropagation();
+        {/* Flame orb - always visible, provides light radius */}
+        <mesh 
+          position={[0.8, 0.62, 0]}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (candleLit) {
               onCandleBlowOut();
-            }}
-            onPointerOver={(e) => {
-              e.stopPropagation();
-              setCandleHovered(true);
-              document.body.style.cursor = 'pointer';
-            }}
-            onPointerOut={(e) => {
-              e.stopPropagation();
-              setCandleHovered(false);
-              document.body.style.cursor = 'default';
-            }}
-          >
-            <sphereGeometry args={[0.04, 8, 8]} />
-            <meshStandardMaterial 
-              color="#ffaa00" 
-              emissive="#ffaa00" 
-              emissiveIntensity={candleHovered ? 2.5 : 1.5} 
-            />
-            <pointLight intensity={0.8} distance={3} color="#ffaa66" />
-          </mesh>
-        )}
+            }
+          }}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            setCandleHovered(true);
+            document.body.style.cursor = candleLit ? 'pointer' : 'default';
+          }}
+          onPointerOut={(e) => {
+            e.stopPropagation();
+            setCandleHovered(false);
+            document.body.style.cursor = 'default';
+          }}
+        >
+          <sphereGeometry args={[0.04, 8, 8]} />
+          <meshStandardMaterial 
+            color="#ffaa00" 
+            emissive="#ffaa00" 
+            emissiveIntensity={candleLit ? (candleHovered ? 2.5 : 1.5) : 0.5} 
+          />
+          <pointLight intensity={candleLit ? 0.8 : 2.5} distance={candleLit ? 3 : 5} color="#ffaa66" />
+        </mesh>
         
         {/* Clickable Lantern above table */}
         <group position={[0, 1.5, 0]}>
@@ -1326,6 +1432,11 @@ export default function NullCandlesRoomScene() {
   const [candleLit, setCandleLit] = useState(true);
   const [showFailure, setShowFailure] = useState(false);
   const [fadeToBlack, setFadeToBlack] = useState(0);
+  const [ghostHealth, setGhostHealth] = useState(5); // Ghost needs 5 hits
+  const [flickerIntensity, setFlickerIntensity] = useState(0);
+  const [glitchEffect, setGlitchEffect] = useState(0);
+  const [showVictory, setShowVictory] = useState(false);
+  const flameOrbPosition: [number, number, number] = [0, 0.62, -8]; // Center of table at [0, 0, -8]
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
   
@@ -1341,6 +1452,38 @@ export default function NullCandlesRoomScene() {
         clearInterval(fadeInterval);
       }
     }, 50);
+  };
+  
+  // Handle successful ghost hit
+  const handleGhostDamage = () => {
+    const newHealth = ghostHealth - 1;
+    setGhostHealth(newHealth);
+    
+    if (newHealth <= 0) {
+      // Victory!
+      setShowVictory(true);
+      setCandleLit(true); // Restore light
+    }
+  };
+  
+  // Handle missed click (outside light radius)
+  const handleMissedClick = () => {
+    // Orb flickers violently
+    setFlickerIntensity(1);
+    setTimeout(() => setFlickerIntensity(0), 500);
+    
+    // Ghost grows stronger (reduce time to failure)
+    const newHealth = ghostHealth + 1;
+    setGhostHealth(newHealth);
+    
+    // Screen glitches
+    setGlitchEffect(1);
+    setTimeout(() => setGlitchEffect(0), 300);
+    
+    // If ghost gets too strong, trigger failure
+    if (newHealth >= 10) {
+      handleMonsterAnimationComplete();
+    }
   };
 
   // Background music
@@ -1409,9 +1552,33 @@ export default function NullCandlesRoomScene() {
           candleLit={candleLit}
           onCandleBlowOut={() => setCandleLit(false)}
           onMonsterAnimationComplete={handleMonsterAnimationComplete}
+          ghostHealth={ghostHealth}
+          onGhostDamage={handleGhostDamage}
+          onMissedClick={handleMissedClick}
+          flameOrbPosition={flameOrbPosition}
         />
       </Scene3D>
-
+      
+      {/* Flicker effect overlay */}
+      {flickerIntensity > 0 && (
+        <div 
+          className="absolute inset-0 bg-red-900 pointer-events-none z-30"
+          style={{ opacity: flickerIntensity * 0.5 }}
+        />
+      )}
+      
+      {/* Glitch effect overlay */}
+      {glitchEffect > 0 && (
+        <div 
+          className="absolute inset-0 pointer-events-none z-30"
+          style={{ 
+            opacity: glitchEffect,
+            background: 'repeating-linear-gradient(0deg, rgba(255,0,0,0.1) 0px, rgba(0,255,0,0.1) 2px, rgba(0,0,255,0.1) 4px)',
+            animation: 'glitch 0.1s infinite'
+          }}
+        />
+      )}
+      
       {/* Staircase prompt */}
       {showStaircasePrompt && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -1572,6 +1739,25 @@ export default function NullCandlesRoomScene() {
           className="absolute inset-0 bg-black pointer-events-none z-40"
           style={{ opacity: fadeToBlack }}
         />
+      )}
+      
+      {/* Victory screen */}
+      {showVictory && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50">
+          <div className="bg-green-950 border-4 border-green-600 p-12 rounded-lg shadow-2xl">
+            <h2 className="text-6xl font-bold text-green-400 mb-6 text-center font-serif">VICTORY!</h2>
+            <p className="text-green-300 text-xl text-center font-serif mb-4">
+              You have banished the Null Wraith!
+            </p>
+            <p className="text-green-200 text-center mb-8">
+              The light has triumphed over darkness.
+            </p>
+            <div className="flex justify-center gap-4">
+              <Button label="Continue Exploring" onClick={() => setShowVictory(false)} />
+              <Button label="Return to Lobby" onClick={handleReturnToHallway} />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
