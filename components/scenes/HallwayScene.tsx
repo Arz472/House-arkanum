@@ -1184,6 +1184,117 @@ function Chain({ position }: { position: [number, number, number] }) {
   );
 }
 
+// Glowing pathway leading to doors - like a road/walkway
+function DoorPathway({ doorPosition, color }: { doorPosition: [number, number, number]; color: string }) {
+  const pathRef = useRef<THREE.Group>(null);
+  
+  useFrame((state) => {
+    if (pathRef.current) {
+      pathRef.current.children.forEach((child, i) => {
+        if (child instanceof THREE.Mesh) {
+          const material = child.material as THREE.MeshStandardMaterial;
+          // Pulsing glow effect flowing toward door
+          material.emissiveIntensity = 0.2 + Math.sin(state.clock.elapsedTime * 2 - i * 0.5) * 0.15;
+        }
+      });
+    }
+  });
+  
+  // Calculate pathway from center to door
+  const startPos: [number, number, number] = [0, -1.95, 2]; // Starting position
+  const pathWidth = 0.8;
+  
+  // Calculate direction and distance
+  const dx = doorPosition[0] - startPos[0];
+  const dz = doorPosition[2] - startPos[2];
+  const distance = Math.sqrt(dx * dx + dz * dz);
+  const angle = Math.atan2(dx, dz);
+  
+  // Create path segments
+  const segmentLength = 1.5;
+  const numSegments = Math.floor(distance / segmentLength);
+  
+  return (
+    <group ref={pathRef}>
+      {Array.from({ length: numSegments }).map((_, i) => {
+        const t = (i + 0.5) / numSegments;
+        const x = startPos[0] + dx * t;
+        const z = startPos[2] + dz * t;
+        
+        return (
+          <mesh 
+            key={i} 
+            position={[x, startPos[1], z]} 
+            rotation={[-Math.PI / 2, angle, 0]}
+          >
+            <planeGeometry args={[pathWidth, segmentLength * 0.9]} />
+            <meshStandardMaterial 
+              color={color}
+              emissive={color}
+              emissiveIntensity={0.2}
+              transparent
+              opacity={0.5}
+            />
+          </mesh>
+        );
+      })}
+      
+      {/* Side borders for road effect */}
+      <mesh 
+        position={[
+          startPos[0] + dx * 0.5,
+          startPos[1] + 0.01,
+          startPos[2] + dz * 0.5
+        ]}
+        rotation={[-Math.PI / 2, angle, 0]}
+      >
+        <planeGeometry args={[0.05, distance]} />
+        <meshStandardMaterial 
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.4}
+          transparent
+          opacity={0.7}
+        />
+      </mesh>
+      <mesh 
+        position={[
+          startPos[0] + dx * 0.5 + Math.sin(angle + Math.PI / 2) * (pathWidth / 2),
+          startPos[1] + 0.01,
+          startPos[2] + dz * 0.5 + Math.cos(angle + Math.PI / 2) * (pathWidth / 2)
+        ]}
+        rotation={[-Math.PI / 2, angle, 0]}
+      >
+        <planeGeometry args={[0.05, distance]} />
+        <meshStandardMaterial 
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.4}
+          transparent
+          opacity={0.7}
+        />
+      </mesh>
+      <mesh 
+        position={[
+          startPos[0] + dx * 0.5 - Math.sin(angle + Math.PI / 2) * (pathWidth / 2),
+          startPos[1] + 0.01,
+          startPos[2] + dz * 0.5 - Math.cos(angle + Math.PI / 2) * (pathWidth / 2)
+        ]}
+        rotation={[-Math.PI / 2, angle, 0]}
+      >
+        <planeGeometry args={[0.05, distance]} />
+        <meshStandardMaterial 
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.4}
+          transparent
+          opacity={0.7}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 function HallwayContent({ 
   onShowPopup, 
   isWalkingBackProp,
@@ -1387,6 +1498,18 @@ function HallwayContent({
           isFixed={fixedRooms[door.id]}
         />
       ))}
+      
+      {/* Glowing pathways leading to each door */}
+      {DOORS.map((door) => (
+        <DoorPathway 
+          key={`path-${door.id}`}
+          doorPosition={door.position}
+          color={door.color}
+        />
+      ))}
+      
+      {/* Pathway to altar door */}
+      <DoorPathway doorPosition={ALTAR_DOOR_POSITION} color="#ffd700" />
       
       {/* Altar door - always visible */}
       <AltarDoor onClick={() => handleAltarDoorClick(ALTAR_DOOR_POSITION)} />

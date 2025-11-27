@@ -9,32 +9,7 @@ import Overlay from '@/components/ui/Overlay';
 import Button from '@/components/ui/Button';
 import * as THREE from 'three';
 
-interface StaircaseInteractionProps {
-  onGoUp?: () => void;
-  onGoDown?: () => void;
-  onClose: () => void;
-  canGoUp: boolean;
-  canGoDown: boolean;
-}
 
-function StaircaseInteraction({ onGoUp, onGoDown, onClose, canGoUp, canGoDown }: StaircaseInteractionProps) {
-  return (
-    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-gray-900 border-2 border-gray-700 p-6 rounded-lg max-w-md">
-        <h2 className="text-2xl font-bold text-white mb-4 text-center">Staircase</h2>
-        <div className="flex flex-col gap-3">
-          {canGoUp && onGoUp && (
-            <Button label="Go Up" onClick={onGoUp} />
-          )}
-          {canGoDown && onGoDown && (
-            <Button label="Go Down" onClick={onGoDown} />
-          )}
-          <Button label="Stay Here" onClick={onClose} />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function CandleMonster({ visible, onAnimationComplete }: { visible: boolean; onAnimationComplete: () => void }) {
   const { scene, animations } = useGLTF('/KIRO_ASSETS/entities/candle monster/Animation_Arise_withSkin.glb');
@@ -44,11 +19,13 @@ function CandleMonster({ visible, onAnimationComplete }: { visible: boolean; onA
   const mixer = useRef<THREE.AnimationMixer | null>(null);
   const action = useRef<THREE.AnimationAction | null>(null);
   const audioRef = useRef<THREE.PositionalAudio | null>(null);
+  const hasPlayedAudio = useRef(false); // Flag to ensure audio only plays once
 
   // Set up animation mixer when visible
   useEffect(() => {
-    if (visible && animations && animations.length > 0) {
+    if (visible && animations && animations.length > 0 && !hasPlayedAudio.current) {
       console.log('🔥 MONSTER APPEARING - Animation starting!');
+      hasPlayedAudio.current = true; // Mark as played
       
       // Create positional audio at monster location
       const listener = new THREE.AudioListener();
@@ -64,6 +41,7 @@ function CandleMonster({ visible, onAnimationComplete }: { visible: boolean; onA
         positionalAudio.setVolume(1.5);
         positionalAudio.setLoop(false); // Play once
         positionalAudio.play();
+        console.log('🔊 Scream audio playing once');
       });
       
       // Create mixer on the scene
@@ -143,26 +121,23 @@ function CandleMonster({ visible, onAnimationComplete }: { visible: boolean; onA
 }
 
 function LibraryContent({ 
-  currentFloor, 
-  onShowStaircasePrompt,
   onShowRiddle,
   onShowWarning,
   onShowExitConfirm,
+  onShowStaircasePrompt,
   candleLit,
   onCandleBlowOut,
   onMonsterAnimationComplete
 }: { 
-  currentFloor: number;
-  onShowStaircasePrompt: (show: boolean) => void;
   onShowRiddle: (show: boolean) => void;
   onShowWarning: (show: boolean) => void;
   onShowExitConfirm: (show: boolean) => void;
+  onShowStaircasePrompt: (show: boolean) => void;
   candleLit: boolean;
   onCandleBlowOut: () => void;
   onMonsterAnimationComplete: () => void;
 }) {
   const { camera } = useThree();
-  const prevFloor = useRef(currentFloor);
   const mousePos = useRef({ x: 0, y: 0 });
   const targetRotation = useRef({ x: 0, y: 0 });
   
@@ -209,14 +184,7 @@ function LibraryContent({
     setIsAnimating(true);
   };
 
-  // Handle floor changes - update camera Y position
-  useEffect(() => {
-    if (prevFloor.current !== currentFloor && !isAnimating) {
-      const targetY = currentFloor * 4 + 1.5; // 1.5, 5.5, or 9.5
-      camera.position.y = targetY;
-      prevFloor.current = currentFloor;
-    }
-  }, [currentFloor, camera, isAnimating]);
+
 
   // Apply smooth camera rotation based on mouse position (hallway-style) or animate to table
   useFrame((state, delta) => {
@@ -250,19 +218,6 @@ function LibraryContent({
       camera.rotation.x += (targetRotation.current.x - camera.rotation.x) * 0.08;
     }
     
-    // Check proximity to staircases for prompts (only when not animating)
-    if (!isAnimating) {
-      const pos = camera.position;
-      const distToStair1 = Math.sqrt(Math.pow(pos.x - 6, 2) + Math.pow(pos.z - (-6), 2));
-      const distToStair2 = Math.sqrt(Math.pow(pos.x - (-6), 2) + Math.pow(pos.z - (-6), 2));
-      
-      if ((distToStair1 < 2 || distToStair2 < 2)) {
-        onShowStaircasePrompt(true);
-      } else if (distToStair1 > 3 && distToStair2 > 3) {
-        onShowStaircasePrompt(false);
-      }
-    }
-    
     // Fade in warning text when candle is blown out
     if (!candleLit && warningOpacity < 1) {
       setWarningOpacity(Math.min(1, warningOpacity + delta * 0.3)); // Slow fade in
@@ -277,14 +232,25 @@ function LibraryContent({
       {/* Lighting - Different lighting when candle is out to show monster */}
       {candleLit ? (
         <>
-          <ambientLight intensity={0.15} color="#1a1520" />
+          <ambientLight intensity={0.3} color="#2a2530" />
           <directionalLight 
             position={[5, 10, 5]} 
-            intensity={0.2}
-            color="#2a2535"
+            intensity={0.4}
+            color="#3a3545"
             castShadow
             shadow-mapSize-width={1024}
             shadow-mapSize-height={1024}
+          />
+          {/* Additional fill lights for better visibility */}
+          <directionalLight 
+            position={[-5, 8, 3]} 
+            intensity={0.25}
+            color="#2a2535"
+          />
+          <directionalLight 
+            position={[0, 12, -10]} 
+            intensity={0.3}
+            color="#2a2535"
           />
         </>
       ) : (
@@ -305,12 +271,20 @@ function LibraryContent({
       {/* All point lights disappear when candle is out */}
       {candleLit && (
         <>
-          <pointLight position={[-6, 2, -8]} intensity={0.6} distance={8} color="#4a6a4a" />
-          <pointLight position={[6, 2, -8]} intensity={0.6} distance={8} color="#4a6a4a" />
-          <pointLight position={[-6, 6, -8]} intensity={0.5} distance={8} color="#4a5a5a" />
-          <pointLight position={[6, 6, -8]} intensity={0.5} distance={8} color="#4a5a5a" />
-          <pointLight position={[-6, 10, -8]} intensity={0.4} distance={8} color="#3a4a5a" />
-          <pointLight position={[6, 10, -8]} intensity={0.4} distance={8} color="#3a4a5a" />
+          <pointLight position={[-6, 2, -8]} intensity={1.2} distance={10} color="#5a7a6a" />
+          <pointLight position={[6, 2, -8]} intensity={1.2} distance={10} color="#5a7a6a" />
+          <pointLight position={[-6, 6, -8]} intensity={1.0} distance={10} color="#5a6a6a" />
+          <pointLight position={[6, 6, -8]} intensity={1.0} distance={10} color="#5a6a6a" />
+          <pointLight position={[-6, 10, -8]} intensity={0.8} distance={10} color="#4a5a6a" />
+          <pointLight position={[6, 10, -8]} intensity={0.8} distance={10} color="#4a5a6a" />
+          {/* Additional corner lights */}
+          <pointLight position={[-8, 3, -14]} intensity={0.8} distance={8} color="#5a6a5a" />
+          <pointLight position={[8, 3, -14]} intensity={0.8} distance={8} color="#5a6a5a" />
+          <pointLight position={[-8, 3, -2]} intensity={0.8} distance={8} color="#5a6a5a" />
+          <pointLight position={[8, 3, -2]} intensity={0.8} distance={8} color="#5a6a5a" />
+          {/* Ceiling lights */}
+          <pointLight position={[0, 5, -4]} intensity={1.0} distance={12} color="#6a7a7a" />
+          <pointLight position={[0, 5, -12]} intensity={1.0} distance={12} color="#6a7a7a" />
         </>
       )}
 
@@ -448,117 +422,141 @@ function LibraryContent({
         </group>
       ))}
 
-      {/* SPIRAL STAIRCASE - Ground to Second Floor (Smaller & More Visible) */}
-      {Array.from({ length: 20 }).map((_, i) => {
-        const angle = (i / 20) * Math.PI * 2;
-        const radius = 1.5; // Reduced from 3 to 1.5
-        const x = Math.cos(angle) * radius + 6;
-        const z = Math.sin(angle) * radius - 6;
-        const y = i * 0.2;
-        const rotation = angle + Math.PI / 2;
-        
-        return (
-          <group key={`stair-1-${i}`}>
-            <mesh position={[x, y, z]} rotation={[0, rotation, 0]} castShadow receiveShadow>
-              <boxGeometry args={[0.8, 0.12, 0.5]} />
-              <meshStandardMaterial color="#5a3a20" roughness={0.7} />
-            </mesh>
-            {/* Step edge highlight */}
-            <mesh position={[x, y + 0.07, z]} rotation={[0, rotation, 0]}>
-              <boxGeometry args={[0.82, 0.02, 0.52]} />
-              <meshStandardMaterial color="#6a4a30" roughness={0.6} />
-            </mesh>
-          </group>
-        );
-      })}
-      
-      {/* Central pole for first staircase - thicker and more visible */}
-      <mesh position={[6, 2, -6]} castShadow>
-        <cylinderGeometry args={[0.25, 0.25, 4, 16]} />
-        <meshStandardMaterial color="#3a2010" roughness={0.6} metalness={0.2} />
-      </mesh>
-      
-      {/* Decorative top cap for first staircase */}
-      <mesh position={[6, 4.1, -6]} castShadow>
-        <sphereGeometry args={[0.35, 16, 16]} />
-        <meshStandardMaterial color="#4a3020" roughness={0.5} metalness={0.3} />
-      </mesh>
 
-      {/* SPIRAL STAIRCASE - Second to Third Floor (Smaller & More Visible) */}
-      {Array.from({ length: 20 }).map((_, i) => {
-        const angle = (i / 20) * Math.PI * 2;
-        const radius = 1.5; // Reduced from 3 to 1.5
-        const x = Math.cos(angle) * radius - 6;
-        const z = Math.sin(angle) * radius - 6;
-        const y = 4 + i * 0.2;
-        const rotation = angle + Math.PI / 2;
+      
+      {/* SPIRAL STAIRCASE - Right back corner */}
+      <group position={[7, 0, -12]}>
+        {/* Central support pole */}
+        <mesh position={[0, 3, 0]} castShadow>
+          <cylinderGeometry args={[0.3, 0.3, 6, 16]} />
+          <meshStandardMaterial color="#3a2010" roughness={0.6} metalness={0.3} />
+        </mesh>
         
-        return (
-          <group key={`stair-2-${i}`}>
-            <mesh position={[x, y, z]} rotation={[0, rotation, 0]} castShadow receiveShadow>
-              <boxGeometry args={[0.8, 0.12, 0.5]} />
-              <meshStandardMaterial color="#5a3a20" roughness={0.7} />
+        {/* Decorative base */}
+        <mesh position={[0, 0.2, 0]} castShadow>
+          <cylinderGeometry args={[0.5, 0.6, 0.4, 16]} />
+          <meshStandardMaterial color="#2a1a0f" roughness={0.7} />
+        </mesh>
+        
+        {/* Decorative top cap */}
+        <mesh position={[0, 6.2, 0]} castShadow>
+          <sphereGeometry args={[0.4, 16, 16]} />
+          <meshStandardMaterial color="#4a3020" roughness={0.5} metalness={0.4} />
+        </mesh>
+        
+        {/* Spiral stairs - 24 steps for 1.5 full rotations */}
+        {Array.from({ length: 24 }).map((_, i) => {
+          const angle = (i / 24) * Math.PI * 3; // 1.5 full rotations
+          const radius = 1.8;
+          const x = Math.cos(angle) * radius;
+          const z = Math.sin(angle) * radius;
+          const y = i * 0.25; // Height increment per step
+          const rotation = angle + Math.PI / 2;
+          
+          return (
+            <group key={`spiral-stair-${i}`} position={[x, y, z]} rotation={[0, rotation, 0]}>
+              {/* Step tread */}
+              <mesh castShadow receiveShadow>
+                <boxGeometry args={[1.2, 0.12, 0.6]} />
+                <meshStandardMaterial color="#4a3520" roughness={0.7} />
+              </mesh>
+              {/* Step edge highlight */}
+              <mesh position={[0, 0.07, 0]}>
+                <boxGeometry args={[1.22, 0.02, 0.62]} />
+                <meshStandardMaterial color="#5a4530" roughness={0.6} />
+              </mesh>
+              {/* Support bracket connecting to pole */}
+              <mesh position={[-0.5, -0.1, 0]} rotation={[0, 0, -0.3]} castShadow>
+                <boxGeometry args={[0.15, 0.3, 0.5]} />
+                <meshStandardMaterial color="#3a2515" roughness={0.8} />
+              </mesh>
+            </group>
+          );
+        })}
+        
+        {/* Outer handrail posts */}
+        {Array.from({ length: 12 }).map((_, i) => {
+          const angle = (i / 12) * Math.PI * 3;
+          const radius = 2.4;
+          const x = Math.cos(angle) * radius;
+          const z = Math.sin(angle) * radius;
+          const y = i * 0.5;
+          
+          return (
+            <mesh key={`handrail-post-${i}`} position={[x, y + 0.5, z]} castShadow>
+              <cylinderGeometry args={[0.04, 0.04, 1, 8]} />
+              <meshStandardMaterial color="#3a2515" roughness={0.7} metalness={0.2} />
             </mesh>
-            {/* Step edge highlight */}
-            <mesh position={[x, y + 0.07, z]} rotation={[0, rotation, 0]}>
-              <boxGeometry args={[0.82, 0.02, 0.52]} />
-              <meshStandardMaterial color="#6a4a30" roughness={0.6} />
+          );
+        })}
+        
+        {/* Lanterns along the spiral - every 6th step */}
+        {Array.from({ length: 4 }).map((_, i) => {
+          const stepIndex = i * 6;
+          const angle = (stepIndex / 24) * Math.PI * 3;
+          const radius = 2.6;
+          const x = Math.cos(angle) * radius;
+          const z = Math.sin(angle) * radius;
+          const y = stepIndex * 0.25 + 0.8;
+          
+          return (
+            <group key={`stair-lantern-${i}`} position={[x, y, z]}>
+              <mesh castShadow>
+                <cylinderGeometry args={[0.12, 0.12, 0.25, 6]} />
+                <meshStandardMaterial color="#4a3a2a" roughness={0.6} metalness={0.4} transparent opacity={0.8} />
+              </mesh>
+              <mesh position={[0, 0, 0]}>
+                <sphereGeometry args={[0.08, 8, 8]} />
+                <meshStandardMaterial color="#ffaa44" emissive="#ffaa44" emissiveIntensity={1.5} />
+                <pointLight intensity={1.2} distance={6} color="#ffaa66" />
+              </mesh>
+            </group>
+          );
+        })}
+        
+        {/* Upper landing platform */}
+        <mesh position={[0, 6, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[2.5, 2.5, 0.2, 16]} />
+          <meshStandardMaterial color="#3a2515" roughness={0.8} />
+        </mesh>
+        
+        {/* Landing railing */}
+        {Array.from({ length: 16 }).map((_, i) => {
+          const angle = (i / 16) * Math.PI * 2;
+          const radius = 2.3;
+          const x = Math.cos(angle) * radius;
+          const z = Math.sin(angle) * radius;
+          
+          return (
+            <mesh key={`landing-rail-${i}`} position={[x, 6.6, z]} castShadow>
+              <cylinderGeometry args={[0.03, 0.03, 0.8, 8]} />
+              <meshStandardMaterial color="#3a2515" roughness={0.7} />
             </mesh>
-          </group>
-        );
-      })}
-      
-      {/* Central pole for second staircase - thicker and more visible */}
-      <mesh position={[-6, 6, -6]} castShadow>
-        <cylinderGeometry args={[0.25, 0.25, 4, 16]} />
-        <meshStandardMaterial color="#3a2010" roughness={0.6} metalness={0.2} />
-      </mesh>
-      
-      {/* Decorative top cap for second staircase */}
-      <mesh position={[-6, 8.1, -6]} castShadow>
-        <sphereGeometry args={[0.35, 16, 16]} />
-        <meshStandardMaterial color="#4a3020" roughness={0.5} metalness={0.3} />
-      </mesh>
-      
-      {/* Glowing orbs at base of staircases for visibility */}
-      <mesh position={[6, 0.5, -6]}>
-        <sphereGeometry args={[0.2, 16, 16]} />
-        <meshStandardMaterial color="#ffaa44" emissive="#ffaa44" emissiveIntensity={2} />
-        <pointLight intensity={1.5} distance={4} color="#ffaa44" />
-      </mesh>
-      
-      {/* Floating text above first staircase */}
-      <Text
-        position={[6, 1.5, -6]}
-        fontSize={0.3}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.02}
-        outlineColor="#000000"
-      >
-        Ascend
-      </Text>
-      
-      <mesh position={[-6, 4.5, -6]}>
-        <sphereGeometry args={[0.2, 16, 16]} />
-        <meshStandardMaterial color="#ffaa44" emissive="#ffaa44" emissiveIntensity={2} />
-        <pointLight intensity={1.5} distance={4} color="#ffaa44" />
-      </mesh>
-      
-      {/* Floating text above second staircase */}
-      <Text
-        position={[-6, 5.5, -6]}
-        fontSize={0.3}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.02}
-        outlineColor="#000000"
-      >
-        Ascend
-      </Text>
-      
+          );
+        })}
+        
+        {/* Clickable floating text in front of staircase */}
+        <Text
+          position={[0, 2, 2.5]}
+          fontSize={0.3}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.02}
+          outlineColor="#000000"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleTableClick([7, 1.5, -9]);
+            // Show staircase prompt after animation
+            setTimeout(() => onShowStaircasePrompt(true), 2500);
+          }}
+          onPointerOver={() => document.body.style.cursor = 'pointer'}
+          onPointerOut={() => document.body.style.cursor = 'default'}
+        >
+          Spiral Staircase
+        </Text>
+      </group>
+
       {/* GROUND FLOOR DECORATIONS */}
       
       {/* Yellow Hallway Door - Behind starting position */}
@@ -1321,11 +1319,10 @@ function LibraryContent({
 
 export default function NullCandlesRoomScene() {
   const [showIntro, setShowIntro] = useState(true);
-  const [showStaircasePrompt, setShowStaircasePrompt] = useState(false);
-  const [currentFloor, setCurrentFloor] = useState(0);
   const [showRiddle, setShowRiddle] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showStaircasePrompt, setShowStaircasePrompt] = useState(false);
   const [candleLit, setCandleLit] = useState(true);
   const [showFailure, setShowFailure] = useState(false);
   const [fadeToBlack, setFadeToBlack] = useState(0);
@@ -1400,45 +1397,44 @@ export default function NullCandlesRoomScene() {
     setShowIntro(false);
   };
 
-  const handleGoUp = () => {
-    if (currentFloor < 2) {
-      setCurrentFloor(prev => prev + 1);
-      setShowStaircasePrompt(false);
-    }
-  };
-
-  const handleGoDown = () => {
-    if (currentFloor > 0) {
-      setCurrentFloor(prev => prev - 1);
-      setShowStaircasePrompt(false);
-    }
-  };
-
   return (
     <div className="w-full h-screen relative">
       <Scene3D cameraPosition={[0, 1.5, 2]} cameraFov={75}>
         <color attach="background" args={['#1a1210']} />
         <LibraryContent 
-          currentFloor={currentFloor}
-          onShowStaircasePrompt={setShowStaircasePrompt}
           onShowRiddle={setShowRiddle}
           onShowWarning={setShowWarning}
           onShowExitConfirm={setShowExitConfirm}
+          onShowStaircasePrompt={setShowStaircasePrompt}
           candleLit={candleLit}
           onCandleBlowOut={() => setCandleLit(false)}
           onMonsterAnimationComplete={handleMonsterAnimationComplete}
         />
       </Scene3D>
-      
-      {/* Staircase interaction prompt */}
+
+      {/* Staircase prompt */}
       {showStaircasePrompt && (
-        <StaircaseInteraction
-          onGoUp={currentFloor < 2 ? handleGoUp : undefined}
-          onGoDown={currentFloor > 0 ? handleGoDown : undefined}
-          onClose={() => setShowStaircasePrompt(false)}
-          canGoUp={currentFloor < 2}
-          canGoDown={currentFloor > 0}
-        />
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-gray-900 border-2 border-gray-700 p-6 rounded-lg max-w-md">
+            <h2 className="text-2xl font-bold text-white mb-4 text-center">Spiral Staircase</h2>
+            <p className="text-gray-300 mb-6 text-center">
+              The ancient stairs spiral upward into darkness...
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button 
+                label="Go Up" 
+                onClick={() => {
+                  setShowStaircasePrompt(false);
+                  router.push('/room/library-attic');
+                }} 
+              />
+              <Button 
+                label="Stay Here" 
+                onClick={() => setShowStaircasePrompt(false)} 
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Riddle popup */}
