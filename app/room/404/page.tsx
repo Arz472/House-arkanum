@@ -880,10 +880,17 @@ export default function Door404RoomPage() {
             bgMusicRef.current.pause();
           }
           
-          // Start dark music
+          // Start dark music with custom loop point (0-26 seconds)
           const darkMusic = new Audio('/KIRO_ASSETS/Voices/404 door/bg music dark.mp3');
-          darkMusic.loop = true;
           darkMusic.volume = 0.3;
+          
+          // Custom loop: restart at 26 seconds
+          darkMusic.addEventListener('timeupdate', () => {
+            if (darkMusic.currentTime >= 26) {
+              darkMusic.currentTime = 0;
+            }
+          });
+          
           darkMusic.play();
           bgMusicRef.current = darkMusic;
         }
