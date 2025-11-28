@@ -1710,7 +1710,7 @@ function LoopRoomPopup({ popupRoomName, onEnter, onCancel }: {
           title: 'The 404 Door',
           description: (
             <p className="text-gray-300 font-mono mb-6 text-center">
-              A door that shouldn't exist. Can you find what's missing?
+              Memories of a life that never was. Uncover the heartwarming lies... and the devastating truth beneath them.
             </p>
           )
         };
