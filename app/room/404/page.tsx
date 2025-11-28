@@ -848,7 +848,53 @@ export default function Door404RoomPage() {
     }
   }, [cluesFound, markRoomFixed]);
   
+  // Background music management
+  const bgMusicRef = useRef<HTMLAudioElement | null>(null);
+  
+  useEffect(() => {
+    // Start with light music
+    const lightMusic = new Audio('/KIRO_ASSETS/Voices/404 door/bg music light.mp3');
+    lightMusic.loop = true;
+    lightMusic.volume = 0.3;
+    lightMusic.play();
+    bgMusicRef.current = lightMusic;
+    
+    return () => {
+      if (bgMusicRef.current) {
+        bgMusicRef.current.pause();
+        bgMusicRef.current = null;
+      }
+    };
+  }, []);
+  
+  // Switch to dark music when all blue books are found
+  useEffect(() => {
+    if (allBlueBooksFound && bgMusicRef.current) {
+      // Fade out current music
+      const fadeOut = setInterval(() => {
+        if (bgMusicRef.current && bgMusicRef.current.volume > 0.05) {
+          bgMusicRef.current.volume -= 0.05;
+        } else {
+          clearInterval(fadeOut);
+          if (bgMusicRef.current) {
+            bgMusicRef.current.pause();
+          }
+          
+          // Start dark music
+          const darkMusic = new Audio('/KIRO_ASSETS/Voices/404 door/bg music dark.mp3');
+          darkMusic.loop = true;
+          darkMusic.volume = 0.3;
+          darkMusic.play();
+          bgMusicRef.current = darkMusic;
+        }
+      }, 100);
+    }
+  }, [allBlueBooksFound]);
+  
   const handleReturnToHallway = () => {
+    if (bgMusicRef.current) {
+      bgMusicRef.current.pause();
+    }
     router.push('/');
   };
   
