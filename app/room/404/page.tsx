@@ -6,6 +6,8 @@ import { useFrame } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import Scene3D from '@/components/Scene3D';
 import { useGameState } from '@/store/gameState';
+import Overlay from '@/components/ui/Overlay';
+import Button from '@/components/ui/Button';
 
 // Clickable paper clue component (handwritten notes)
 function PaperClue({ position, rotation, text, onRead }: { 
@@ -30,8 +32,8 @@ function PaperClue({ position, rotation, text, onRead }: {
       <planeGeometry args={[0.4, 0.5]} />
       <meshStandardMaterial 
         color={hovered ? "#ffffff" : "#f5f5dc"} 
-        emissive={hovered ? "#ffff88" : "#000000"}
-        emissiveIntensity={hovered ? 0.3 : 0}
+        emissive={hovered ? "#ffff88" : "#ffffcc"}
+        emissiveIntensity={hovered ? 0.8 : 0.5}
       />
     </mesh>
   );
@@ -778,11 +780,13 @@ function ForwardScrollContent({ scrollZ, mousePos, onReadClue, clueTexts, showWh
 }
 
 export default function Door404RoomPage() {
+  const router = useRouter();
   const [scrollZ, setScrollZ] = useState(5);
   const mousePos = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentClue, setCurrentClue] = useState<string | null>(null);
   const [cluesFound, setCluesFound] = useState<Set<number>>(new Set());
+  const [showSuccess, setShowSuccess] = useState(false);
   const markRoomFixed = useGameState((state) => state.markRoomFixed);
   
   const MIN_Z = 5;
@@ -804,8 +808,13 @@ export default function Door404RoomPage() {
   useEffect(() => {
     if (cluesFound.size === 8) {
       markRoomFixed('door404');
+      setShowSuccess(true);
     }
   }, [cluesFound, markRoomFixed]);
+  
+  const handleReturnToHallway = () => {
+    router.push('/');
+  };
   
   const clueTexts = [
     "I'm so proud of you, kiddo. I can still see you standing there in your cap, smiling at me. I wish I'd taken more pictures… I can't seem to find any now. Maybe I misplaced the album again.",
@@ -913,6 +922,18 @@ export default function Door404RoomPage() {
           />
         </div>
       </div>
+      
+      {/* Success overlay */}
+      {showSuccess && (
+        <Overlay title="Truth Revealed">
+          <p className="text-center mb-4 text-green-400">
+            You've uncovered all the memories... and the devastating truth behind them.
+          </p>
+          <div className="flex justify-center mt-4">
+            <Button label="Return to Hallway" onClick={handleReturnToHallway} />
+          </div>
+        </Overlay>
+      )}
     </div>
   );
 }

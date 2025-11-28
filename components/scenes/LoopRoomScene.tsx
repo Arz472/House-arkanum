@@ -386,14 +386,6 @@ function Ghost({ onClick, clickCount, isVisible, positionRef, isNearLantern, cor
       {/* Normal ghost - starts on circular path */}
       <group ref={ghostRef} position={[10, 2, -5]} onClick={handleClick}>
         <primitive object={ghostModel} scale={[1.5, 1.5, 1.5]} />
-        
-        {/* Vulnerability indicator when near lantern */}
-        {isNearLantern && (
-          <mesh position={[0, 0, 0]}>
-            <sphereGeometry args={[1.2, 16, 16]} />
-            <meshBasicMaterial color="#ffaa00" transparent opacity={0.3} />
-          </mesh>
-        )}
       </group>
       
       {/* Scream ghost (hidden until jump scare) */}
