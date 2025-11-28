@@ -1317,13 +1317,6 @@ function HallwayContent({
     const offsetX = doorPosition[0] > 0 ? -1.0 : 1.0; // Closer to wall
     const target: [number, number, number] = [doorPosition[0] + offsetX, 1, doorPosition[2]];
     
-    // Play intro audio for door 404
-    if (roomId === 'door404') {
-      const audio = new Audio('/KIRO_ASSETS/Voices/404intro.mp3');
-      audio.volume = 0.5;
-      audio.play();
-    }
-    
     setWalkTarget(target);
     setDoorTarget(doorPosition);
     setIsWalking(true);
@@ -1671,6 +1664,10 @@ function LoopRoomPopup({ popupRoomName, onEnter, onCancel }: {
       audio.play().catch(err => console.log('Audio play error:', err));
     } else if (popupRoomName === 'Null') {
       audio = new Audio('/KIRO_ASSETS/Voices/candleintro.mp3');
+      audio.volume = 0.7;
+      audio.play().catch(err => console.log('Audio play error:', err));
+    } else if (popupRoomName === '404') {
+      audio = new Audio('/KIRO_ASSETS/Voices/404intro.mp3');
       audio.volume = 0.7;
       audio.play().catch(err => console.log('Audio play error:', err));
     }
