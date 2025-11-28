@@ -1317,6 +1317,13 @@ function HallwayContent({
     const offsetX = doorPosition[0] > 0 ? -1.0 : 1.0; // Closer to wall
     const target: [number, number, number] = [doorPosition[0] + offsetX, 1, doorPosition[2]];
     
+    // Play intro audio for door 404
+    if (roomId === 'door404') {
+      const audio = new Audio('/KIRO_ASSETS/Voices/404intro.mp3');
+      audio.volume = 0.5;
+      audio.play();
+    }
+    
     setWalkTarget(target);
     setDoorTarget(doorPosition);
     setIsWalking(true);
