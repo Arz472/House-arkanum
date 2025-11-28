@@ -1,112 +1,194 @@
 import { describe, it, expect } from 'vitest';
-import * as fc from 'fast-check';
 
-/**
- * Feature: haunted-codebase, Property 14: Rune horizontal drag constraint
- * Validates: Requirements 8.4
- * 
- * For any rune in the 404 Room, dragging that rune should update only its x-position 
- * within the defined track constraints.
- */
+describe('Door404RoomScene - Vertical Scroll Mechanics', () => {
+  describe('Task 7.1: Scroll bounds', () => {
+    it('should clamp scroll values between MIN_Y and MAX_Y', () => {
+      const MIN_Y = -10;
+      const MAX_Y = 10;
+      const clamp = (value: number, min: number, max: number) => {
+        return Math.max(min, Math.min(max, value));
+      };
 
-describe('Door404RoomScene - Property-Based Tests', () => {
-  it('Property 14: Rune horizontal drag constraint - rune position constrained to x-axis within bounds', () => {
-    const MIN_X = -3;
-    const MAX_X = 3;
+      // Test within bounds
+      expect(clamp(0, MIN_Y, MAX_Y)).toBe(0);
+      expect(clamp(5, MIN_Y, MAX_Y)).toBe(5);
+      expect(clamp(-5, MIN_Y, MAX_Y)).toBe(-5);
 
-    // Simulate the drag constraint logic
-    const constrainRunePosition = (inputX: number): number => {
-      return Math.max(MIN_X, Math.min(MAX_X, inputX));
-    };
+      // Test beyond max
+      expect(clamp(15, MIN_Y, MAX_Y)).toBe(MAX_Y);
+      expect(clamp(100, MIN_Y, MAX_Y)).toBe(MAX_Y);
 
-    fc.assert(
-      fc.property(
-        fc.float({ min: -100, max: 100, noNaN: true }),
-        (inputX) => {
-          const constrainedX = constrainRunePosition(inputX);
-          
-          // Property: constrained position must be within bounds
-          const withinBounds = constrainedX >= MIN_X && constrainedX <= MAX_X;
-          
-          // Property: if input is within bounds, output equals input
-          const preservesValidInput = 
-            (inputX >= MIN_X && inputX <= MAX_X) ? constrainedX === inputX : true;
-          
-          // Property: if input is below min, output is min
-          const clampsToMin = inputX < MIN_X ? constrainedX === MIN_X : true;
-          
-          // Property: if input is above max, output is max
-          const clampsToMax = inputX > MAX_X ? constrainedX === MAX_X : true;
-          
-          return withinBounds && preservesValidInput && clampsToMin && clampsToMax;
+      // Test beyond min
+      expect(clamp(-15, MIN_Y, MAX_Y)).toBe(MIN_Y);
+      expect(clamp(-100, MIN_Y, MAX_Y)).toBe(MIN_Y);
+    });
+  });
+
+  describe('Task 7.2: Parallax ratios', () => {
+    it('should calculate correct parallax positions', () => {
+      const cameraY = 5;
+
+      const backgroundY = cameraY * 0.7;
+      const midgroundY = cameraY * 1.0;
+      const foregroundY = cameraY * 1.3;
+
+      expect(backgroundY).toBe(3.5);
+      expect(midgroundY).toBe(5);
+      expect(foregroundY).toBe(6.5);
+    });
+
+    it('should maintain parallax ratios at different camera positions', () => {
+      const testPositions = [-5, 10, -10, 3.5];
+
+      testPositions.forEach(cameraY => {
+        const backgroundY = cameraY * 0.7;
+        const midgroundY = cameraY * 1.0;
+        const foregroundY = cameraY * 1.3;
+
+        // Verify ratios (skip zero to avoid division by zero)
+        if (cameraY !== 0) {
+          expect(backgroundY / cameraY).toBeCloseTo(0.7, 5);
+          expect(midgroundY / cameraY).toBeCloseTo(1.0, 5);
+          expect(foregroundY / cameraY).toBeCloseTo(1.3, 5);
         }
-      ),
-      { numRuns: 100 }
-    );
-  });
-});
-
-describe('Door404RoomScene - Unit Tests', () => {
-  it('should have exactly 3 runes', () => {
-    // Initial rune configuration
-    const runes = [
-      { id: 'r1', symbol: '2', position: -2, correctPosition: 0 },
-      { id: 'r2', symbol: '1', position: 0, correctPosition: -2 },
-      { id: 'r3', symbol: '3', position: 2, correctPosition: 2 },
-    ];
-
-    expect(runes).toHaveLength(3);
-    expect(runes.every(r => r.id && r.symbol && typeof r.position === 'number')).toBe(true);
+      });
+    });
   });
 
-  it('should open door when runes are in correct order', () => {
-    const POSITION_TOLERANCE = 0.5;
-    
-    // Runes in correct positions
-    const correctRunes = [
-      { id: 'r1', symbol: '2', position: 0, correctPosition: 0 },
-      { id: 'r2', symbol: '1', position: -2, correctPosition: -2 },
-      { id: 'r3', symbol: '3', position: 2, correctPosition: 2 },
-    ];
+  describe('Task 7.3: Hint collection', () => {
+    it('should add hints to collection set', () => {
+      const collectedHints = new Set<string>();
 
-    const isCorrect = correctRunes.every((rune) => {
-      return Math.abs(rune.position - rune.correctPosition) < POSITION_TOLERANCE;
+      // Simulate collecting hints
+      collectedHints.add('hint1');
+      expect(collectedHints.has('hint1')).toBe(true);
+      expect(collectedHints.size).toBe(1);
+
+      collectedHints.add('hint2');
+      expect(collectedHints.size).toBe(2);
+
+      // Double-add should not increase size
+      collectedHints.add('hint1');
+      expect(collectedHints.size).toBe(2);
     });
 
-    expect(isCorrect).toBe(true);
+    it('should track all 5 hints', () => {
+      const collectedHints = new Set<string>();
+      const hintIds = ['hint1', 'hint2', 'hint3', 'hint4', 'hint5'];
+
+      hintIds.forEach(id => collectedHints.add(id));
+
+      expect(collectedHints.size).toBe(5);
+      hintIds.forEach(id => {
+        expect(collectedHints.has(id)).toBe(true);
+      });
+    });
   });
 
-  it('should not open door when runes are in incorrect order', () => {
-    const POSITION_TOLERANCE = 0.5;
-    
-    // Runes in incorrect positions
-    const incorrectRunes = [
-      { id: 'r1', symbol: '2', position: -2, correctPosition: 0 },
-      { id: 'r2', symbol: '1', position: 0, correctPosition: -2 },
-      { id: 'r3', symbol: '3', position: 2, correctPosition: 2 },
-    ];
+  describe('Task 7.4: Terminal activation', () => {
+    it('should activate terminal when required hints are collected', () => {
+      const REQUIRED_HINTS = 5;
+      const collectedHints = new Set<string>();
 
-    const isCorrect = incorrectRunes.every((rune) => {
-      return Math.abs(rune.position - rune.correctPosition) < POSITION_TOLERANCE;
+      // Before collecting hints
+      let canReveal = collectedHints.size >= REQUIRED_HINTS;
+      expect(canReveal).toBe(false);
+
+      // Collect 4 hints
+      ['hint1', 'hint2', 'hint3', 'hint4'].forEach(id => collectedHints.add(id));
+      canReveal = collectedHints.size >= REQUIRED_HINTS;
+      expect(canReveal).toBe(false);
+
+      // Collect 5th hint
+      collectedHints.add('hint5');
+      canReveal = collectedHints.size >= REQUIRED_HINTS;
+      expect(canReveal).toBe(true);
     });
 
-    expect(isCorrect).toBe(false);
+    it('should guard terminal click when inactive', () => {
+      const active = false;
+      const clicked = false;
+
+      // Simulate click guard logic
+      const shouldTrigger = active && !clicked;
+      expect(shouldTrigger).toBe(false);
+    });
+
+    it('should allow terminal click when active and not clicked', () => {
+      const active = true;
+      const clicked = false;
+
+      const shouldTrigger = active && !clicked;
+      expect(shouldTrigger).toBe(true);
+    });
+
+    it('should prevent double-clicking terminal', () => {
+      const active = true;
+      const clicked = true;
+
+      const shouldTrigger = active && !clicked;
+      expect(shouldTrigger).toBe(false);
+    });
   });
 
-  it('should trigger success when door opens', () => {
-    let successTriggered = false;
-    const markRoomFixed = (roomId: string) => {
-      if (roomId === 'door404') {
-        successTriggered = true;
+  describe('Task 7.5: Completion flow', () => {
+    it('should transition to completed state', () => {
+      let roomCompleted = false;
+
+      // Simulate terminal completion
+      const handleTerminalComplete = () => {
+        roomCompleted = true;
+      };
+
+      expect(roomCompleted).toBe(false);
+      handleTerminalComplete();
+      expect(roomCompleted).toBe(true);
+    });
+  });
+
+  describe('Level positioning', () => {
+    it('should have distinct Y positions for each level', () => {
+      const LEVELS = {
+        top: 10,
+        midHigh: 5,
+        center: 0,
+        midLow: -5,
+        bottom: -10,
+      };
+
+      const positions = Object.values(LEVELS);
+      const uniquePositions = new Set(positions);
+
+      // All positions should be unique
+      expect(uniquePositions.size).toBe(positions.length);
+
+      // Verify specific positions
+      expect(LEVELS.top).toBe(10);
+      expect(LEVELS.midHigh).toBe(5);
+      expect(LEVELS.center).toBe(0);
+      expect(LEVELS.midLow).toBe(-5);
+      expect(LEVELS.bottom).toBe(-10);
+    });
+  });
+
+  describe('Camera smooth follow', () => {
+    it('should lerp camera position toward scroll target', () => {
+      const lerpFactor = 0.1;
+      let cameraY = 0;
+      const scrollY = 5;
+
+      // Simulate one frame of lerp
+      cameraY += (scrollY - cameraY) * lerpFactor;
+      expect(cameraY).toBeCloseTo(0.5, 5);
+
+      // Simulate multiple frames
+      for (let i = 0; i < 10; i++) {
+        cameraY += (scrollY - cameraY) * lerpFactor;
       }
-    };
-
-    // Simulate door opening
-    const isDoorOpen = true;
-    if (isDoorOpen) {
-      markRoomFixed('door404');
-    }
-
-    expect(successTriggered).toBe(true);
+      
+      // Should be close to target after multiple frames
+      expect(cameraY).toBeGreaterThan(3);
+      expect(cameraY).toBeLessThan(scrollY);
+    });
   });
 });

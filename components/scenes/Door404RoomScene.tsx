@@ -3,357 +3,338 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFrame } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
 import Scene3D from '@/components/Scene3D';
-import Overlay from '@/components/ui/Overlay';
-import Button from '@/components/ui/Button';
-import { useGameState } from '@/store/gameState';
-import { sharedResources } from '@/lib/sharedGeometry';
-import * as THREE from 'three';
 
-interface Rune {
-  id: string;
-  symbol: string;
-  position: number; // position along x-axis track
-  correctPosition: number;
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }
 
-interface RuneObjectProps {
-  rune: Rune;
-  onDrag: (id: string, newPosition: number) => void;
-}
-
-function RuneObject({ rune, onDrag }: RuneObjectProps) {
-  const runeRef = useRef<THREE.Group>(null);
-  const [isDragging, setIsDragging] = useState(false);
+// Scene 1: Graduation Party (Z: 0)
+function GraduationParty({ onBookClick }: { onBookClick: () => void }) {
   const [hovered, setHovered] = useState(false);
-  const raycaster = useRef(new THREE.Raycaster());
-  const planeRef = useRef(new THREE.Plane(new THREE.Vector3(0, 0, 1), 2));
-  const intersectionPoint = useRef(new THREE.Vector3());
-  const runeMaterial = useRef(new THREE.MeshStandardMaterial({
-    color: '#666666',
-    emissive: '#000000',
-    emissiveIntensity: 0
-  }));
-  
-  // Cleanup material on unmount
-  useEffect(() => {
-    return () => {
-      runeMaterial.current.dispose();
-    };
-  }, []);
-
-  const MIN_X = -3;
-  const MAX_X = 3;
-
-  useFrame(({ camera, pointer }) => {
-    if (isDragging && runeRef.current) {
-      // Cast ray from camera through mouse position
-      raycaster.current.setFromCamera(pointer, camera);
-      
-      // Intersect with vertical plane at z=2
-      raycaster.current.ray.intersectPlane(planeRef.current, intersectionPoint.current);
-      
-      if (intersectionPoint.current) {
-        // Constrain to horizontal track
-        const newX = Math.max(MIN_X, Math.min(MAX_X, intersectionPoint.current.x));
-        onDrag(rune.id, newX);
-      }
-    }
-  });
-
-  const handlePointerDown = (e: any) => {
-    e.stopPropagation();
-    setIsDragging(true);
-    e.target.setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerUp = (e: any) => {
-    setIsDragging(false);
-    e.target.releasePointerCapture(e.pointerId);
-  };
-
-  // Update material based on hover/drag state
-  useFrame(() => {
-    if (runeMaterial.current) {
-      if (hovered || isDragging) {
-        runeMaterial.current.color.setHex(0x88ff88);
-        runeMaterial.current.emissive.setHex(0x44ff44);
-        runeMaterial.current.emissiveIntensity = 0.5;
-      } else {
-        runeMaterial.current.color.setHex(0x666666);
-        runeMaterial.current.emissive.setHex(0x000000);
-        runeMaterial.current.emissiveIntensity = 0;
-      }
-    }
-  });
   
   return (
-    <group ref={runeRef} position={[rune.position, -0.5, 2]}>
-      <mesh
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerEnter={() => setHovered(true)}
-        onPointerLeave={() => setHovered(false)}
-        geometry={sharedResources.runeGeometry}
-        material={runeMaterial.current}
-      />
-      
-      {/* Symbol on rune */}
-      <Text
-        position={[0, 0.06, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.3}
-        color="#ffffff"
-        anchorX="center"
-        anchorY="middle"
+    <group position={[0, 0, 0]}>
+      <mesh position={[0, -1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[20, 20]} />
+        <meshStandardMaterial color="#8b7355" />
+      </mesh>
+      <mesh position={[0, 2, -8]}>
+        <planeGeometry args={[20, 8]} />
+        <meshStandardMaterial color="#e8d5b7" />
+      </mesh>
+      <mesh position={[0, 1, -7.9]}>
+        <ringGeometry args={[2, 2.2, 32]} />
+        <meshStandardMaterial color="#2c5aa0" emissive="#2c5aa0" emissiveIntensity={0.5} />
+      </mesh>
+      <mesh position={[-3, 3, -5]}>
+        <sphereGeometry args={[0.4, 16, 16]} />
+        <meshStandardMaterial color="#ff6b6b" />
+      </mesh>
+      <mesh position={[3, 3, -5]}>
+        <sphereGeometry args={[0.4, 16, 16]} />
+        <meshStandardMaterial color="#ffe66d" />
+      </mesh>
+      <mesh position={[0, 0, -3]}>
+        <boxGeometry args={[4, 0.1, 2]} />
+        <meshStandardMaterial color="#654321" />
+      </mesh>
+      <mesh position={[0, 0.3, -3]}>
+        <cylinderGeometry args={[0.5, 0.5, 0.5, 16]} />
+        <meshStandardMaterial color="#fff5e1" />
+      </mesh>
+      {/* Medical Book - Blue - GIANT TEST SPHERE */}
+      <mesh 
+        position={[-2, 1, 0]}
+        onClick={onBookClick}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
       >
-        {rune.symbol}
-      </Text>
-    </group>
-  );
-}
-
-interface DoorProps {
-  isOpen: boolean;
-}
-
-function DoorObject({ isOpen }: DoorProps) {
-  const doorRef = useRef<THREE.Group>(null);
-
-  useFrame(() => {
-    if (doorRef.current) {
-      const targetRotation = isOpen ? -Math.PI / 2 : 0;
-      doorRef.current.rotation.y += (targetRotation - doorRef.current.rotation.y) * 0.05;
-    }
-  });
-
-  return (
-    <group ref={doorRef} position={[0, 0, -8]}>
-      <mesh position={[0.75, 1, 0]}>
-        <boxGeometry args={[1.5, 2.5, 0.2]} />
-        <meshStandardMaterial color="#4a4a4a" roughness={0.8} />
+        <sphereGeometry args={[1, 32, 32]} />
+        <meshStandardMaterial 
+          color="#0000ff" 
+          emissive="#0000ff" 
+          emissiveIntensity={hovered ? 5 : 3}
+        />
       </mesh>
     </group>
   );
 }
 
-interface GlitchTextProps {
-  text: string;
-  position: [number, number, number];
-}
-
-function GlitchText({ text, position }: GlitchTextProps) {
-  const textRef = useRef<any>(null);
-
-  useFrame((state) => {
-    if (textRef.current) {
-      const time = state.clock.getElapsedTime();
-      
-      // Subtle glitch animation
-      const glitchScale = 1 + Math.sin(time * 10) * 0.05;
-      const glitchOffset = Math.sin(time * 20) * 0.02;
-      
-      textRef.current.scale.set(glitchScale, glitchScale, glitchScale);
-      textRef.current.position.x = position[0] + glitchOffset;
-      
-      // Flicker effect
-      const flicker = Math.sin(time * 30) > 0.9 ? 0.5 : 1;
-      if (textRef.current.material) {
-        textRef.current.material.opacity = flicker;
-      }
-    }
-  });
-
+// Scene 2: Soccer Game (Z: -20)
+function SoccerGame() {
   return (
-    <Text
-      ref={textRef}
-      position={position}
-      fontSize={0.8}
-      color="#ff0000"
-      anchorX="center"
-      anchorY="middle"
-      outlineWidth={0.02}
-      outlineColor="#000000"
-    >
-      {text}
-    </Text>
+    <group position={[0, 0, -20]}>
+      <mesh position={[0, -1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[30, 30]} />
+        <meshStandardMaterial color="#2d5016" />
+      </mesh>
+      <mesh position={[0, 2, -8]}>
+        <planeGeometry args={[20, 8]} />
+        <meshStandardMaterial color="#87ceeb" />
+      </mesh>
+      <mesh position={[0, 1, -7.9]}>
+        <ringGeometry args={[2, 2.2, 32]} />
+        <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.5} />
+      </mesh>
+      <mesh position={[0, 0, -7]}>
+        <boxGeometry args={[6, 0.1, 0.1]} />
+        <meshStandardMaterial color="#ffffff" />
+      </mesh>
+      <mesh position={[0, -0.5, -2]}>
+        <sphereGeometry args={[0.4, 16, 16]} />
+        <meshStandardMaterial color="#ffffff" />
+      </mesh>
+      {/* Medical Book - Blue - SOCCER */}
+      <group position={[3, 0.3, 5]} rotation={[0, -0.5, 0]}>
+        <mesh>
+          <boxGeometry args={[1.5, 0.4, 2]} />
+          <meshStandardMaterial 
+            color="#0000ff" 
+            emissive="#0066ff" 
+            emissiveIntensity={2}
+          />
+        </mesh>
+        <mesh position={[0, 0.21, 0]}>
+          <boxGeometry args={[1.4, 0.05, 1.9]} />
+          <meshStandardMaterial 
+            color="#00ffff" 
+            emissive="#00ffff" 
+            emissiveIntensity={1.5}
+          />
+        </mesh>
+      </group>
+    </group>
   );
 }
 
-function CameraController() {
-  const mousePos = useRef({ x: 0, y: 0 });
-  const targetRotation = useRef({ x: 0, y: 0 });
-
-  useState(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      mousePos.current.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mousePos.current.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  });
-
-  useFrame(({ camera }) => {
-    // Negate x to fix left/right inversion - mouse right = camera right
-    targetRotation.current.y = -mousePos.current.x * 0.08;
-    targetRotation.current.x = mousePos.current.y * 0.05;
-
-    camera.rotation.y += (targetRotation.current.y - camera.rotation.y) * 0.05;
-    camera.rotation.x += (targetRotation.current.x - camera.rotation.x) * 0.05;
-  });
-
-  return null;
+// Scene 3: School (Z: -40)
+function School() {
+  return (
+    <group position={[0, 0, -40]}>
+      <mesh position={[0, -1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[20, 20]} />
+        <meshStandardMaterial color="#d4d4d4" />
+      </mesh>
+      <mesh position={[0, 2, -8]}>
+        <planeGeometry args={[20, 8]} />
+        <meshStandardMaterial color="#f5f5dc" />
+      </mesh>
+      <mesh position={[0, 1, -7.9]}>
+        <ringGeometry args={[2, 2.2, 32]} />
+        <meshStandardMaterial color="#2f4f2f" emissive="#2f4f2f" emissiveIntensity={0.5} />
+      </mesh>
+      <mesh position={[0, 2, -7.8]}>
+        <planeGeometry args={[8, 3]} />
+        <meshStandardMaterial color="#2f4f2f" />
+      </mesh>
+      <mesh position={[-2, -0.5, -2]}>
+        <boxGeometry args={[1.2, 0.1, 0.8]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+      <mesh position={[2, -0.5, -2]}>
+        <boxGeometry args={[1.2, 0.1, 0.8]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+      {/* Medical Book - Blue - SCHOOL */}
+      <group position={[-3, 0.3, 5]} rotation={[0, 0.5, 0]}>
+        <mesh>
+          <boxGeometry args={[1.5, 0.4, 2]} />
+          <meshStandardMaterial 
+            color="#0000ff" 
+            emissive="#0066ff" 
+            emissiveIntensity={2}
+          />
+        </mesh>
+        <mesh position={[0, 0.21, 0]}>
+          <boxGeometry args={[1.4, 0.05, 1.9]} />
+          <meshStandardMaterial 
+            color="#00ffff" 
+            emissive="#00ffff" 
+            emissiveIntensity={1.5}
+          />
+        </mesh>
+      </group>
+    </group>
+  );
 }
 
-interface Door404RoomContentProps {
-  onSuccess: () => void;
+// Scene 4: Birthday Party (Z: -60)
+function BirthdayParty() {
+  return (
+    <group position={[0, 0, -60]}>
+      <mesh position={[0, -1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[20, 20]} />
+        <meshStandardMaterial color="#8b7355" />
+      </mesh>
+      <mesh position={[0, 2, -8]}>
+        <planeGeometry args={[20, 8]} />
+        <meshStandardMaterial color="#ffb6c1" />
+      </mesh>
+      <mesh position={[0, 1, -7.9]}>
+        <ringGeometry args={[2, 2.2, 32]} />
+        <meshStandardMaterial color="#ff69b4" emissive="#ff69b4" emissiveIntensity={0.5} />
+      </mesh>
+      <mesh position={[-3, 3, -5]}>
+        <sphereGeometry args={[0.4, 16, 16]} />
+        <meshStandardMaterial color="#ff0000" />
+      </mesh>
+      <mesh position={[3, 3, -5]}>
+        <sphereGeometry args={[0.4, 16, 16]} />
+        <meshStandardMaterial color="#0000ff" />
+      </mesh>
+      <mesh position={[0, 0.3, -3]}>
+        <cylinderGeometry args={[0.7, 0.7, 0.6, 16]} />
+        <meshStandardMaterial color="#fff5e1" />
+      </mesh>
+      <mesh position={[0, 1.2, -3]}>
+        <sphereGeometry args={[0.05, 8, 8]} />
+        <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={1} />
+      </mesh>
+    </group>
+  );
 }
 
-function Door404RoomContent({ onSuccess }: Door404RoomContentProps) {
-  const markRoomFixed = useGameState((state) => state.markRoomFixed);
+// Scene 5: Hospital (Z: -80)
+function Hospital() {
+  return (
+    <group position={[0, 0, -80]}>
+      <mesh position={[0, -1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[20, 20]} />
+        <meshStandardMaterial color="#f0f0f0" />
+      </mesh>
+      <mesh position={[0, 2, -8]}>
+        <planeGeometry args={[20, 8]} />
+        <meshStandardMaterial color="#ffffff" />
+      </mesh>
+      <mesh position={[0, -0.3, -3]}>
+        <boxGeometry args={[2, 0.3, 3]} />
+        <meshStandardMaterial color="#e8e8e8" />
+      </mesh>
+      <mesh position={[2, 0.5, -2]}>
+        <cylinderGeometry args={[0.05, 0.05, 2, 8]} />
+        <meshStandardMaterial color="#c0c0c0" />
+      </mesh>
+      <mesh position={[-2, 0, -2]}>
+        <boxGeometry args={[0.8, 1.2, 0.6]} />
+        <meshStandardMaterial color="#d3d3d3" />
+      </mesh>
+      {/* Medical Book - Blue - HOSPITAL */}
+      <group position={[0, 0.3, 5]} rotation={[0, 0, 0]}>
+        <mesh>
+          <boxGeometry args={[1.5, 0.4, 2]} />
+          <meshStandardMaterial 
+            color="#0000ff" 
+            emissive="#0066ff" 
+            emissiveIntensity={2}
+          />
+        </mesh>
+        <mesh position={[0, 0.21, 0]}>
+          <boxGeometry args={[1.4, 0.05, 1.9]} />
+          <meshStandardMaterial 
+            color="#00ffff" 
+            emissive="#00ffff" 
+            emissiveIntensity={1.5}
+          />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+function ForwardScrollContent({ scrollZ, onBookClick }: { scrollZ: number; onBookClick: () => void }) {
+  useFrame((state) => {
+    const camera = state.camera;
+    camera.position.z += (scrollZ - camera.position.z) * 0.1;
+  });
   
-  // Define correct order: symbols should be arranged as 1, 2, 3 from left to right
-  const [runes, setRunes] = useState<Rune[]>([
-    { id: 'r1', symbol: '2', position: -2, correctPosition: 0 },
-    { id: 'r2', symbol: '1', position: 0, correctPosition: -2 },
-    { id: 'r3', symbol: '3', position: 2, correctPosition: 2 },
-  ]);
-
-  const [isDoorOpen, setIsDoorOpen] = useState(false);
-  const [hasTriggeredSuccess, setHasTriggeredSuccess] = useState(false);
-
-  const handleRuneDrag = (id: string, newPosition: number) => {
-    setRunes((currentRunes) =>
-      currentRunes.map((rune) =>
-        rune.id === id ? { ...rune, position: newPosition } : rune
-      )
-    );
-  };
-
-  // Check if runes are in correct order - throttled for performance
-  const frameCount = useRef(0);
-  useFrame(() => {
-    // Throttle validation checks to every 5th frame for performance
-    frameCount.current++;
-    if (frameCount.current % 5 !== 0) return;
-    
-    if (!isDoorOpen && !hasTriggeredSuccess) {
-      const POSITION_TOLERANCE = 0.5;
-      
-      const isCorrect = runes.every((rune) => {
-        return Math.abs(rune.position - rune.correctPosition) < POSITION_TOLERANCE;
-      });
-
-      if (isCorrect) {
-        setIsDoorOpen(true);
-        setHasTriggeredSuccess(true);
-        setTimeout(() => {
-          markRoomFixed('door404');
-          onSuccess();
-        }, 1000);
-      }
-    }
-  });
-
   return (
     <>
-      {/* Camera parallax controller */}
-      <CameraController />
-
-      {/* Lighting */}
       <ambientLight intensity={0.5} />
-      <directionalLight position={[5, 5, 5]} intensity={0.8} />
-
-      {/* Door */}
-      <DoorObject isOpen={isDoorOpen} />
-
-      {/* Door frame */}
-      <mesh position={[0, 1, -8]}>
-        <boxGeometry args={[2, 3, 0.3]} />
-        <meshStandardMaterial color="#2a2a2a" />
-      </mesh>
-
-      {/* 404 glitch text above door */}
-      <GlitchText text="404" position={[0, 3, -7.8]} />
-
-      {/* Runes */}
-      {runes.map((rune) => (
-        <RuneObject key={rune.id} rune={rune} onDrag={handleRuneDrag} />
-      ))}
-
-      {/* Track indicator */}
-      <mesh position={[0, -0.6, 2]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[6.5, 0.1]} />
-        <meshStandardMaterial color="#444444" emissive="#222222" emissiveIntensity={0.3} />
-      </mesh>
-
-      {/* Room geometry - corridor */}
-      {/* Floor */}
-      <mesh position={[0, -2, -3]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[10, 15]} />
-        <meshStandardMaterial color="#3a3a3a" roughness={0.8} />
-      </mesh>
-
-      {/* Ceiling */}
-      <mesh position={[0, 4, -3]} rotation={[Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[10, 15]} />
-        <meshStandardMaterial color="#2a2a2a" roughness={0.8} />
-      </mesh>
-
-      {/* Left wall */}
-      <mesh position={[-5, 1, -3]} rotation={[0, Math.PI / 2, 0]}>
-        <planeGeometry args={[15, 6]} />
-        <meshStandardMaterial color="#3a3a3a" roughness={0.9} />
-      </mesh>
-
-      {/* Right wall */}
-      <mesh position={[5, 1, -3]} rotation={[0, -Math.PI / 2, 0]}>
-        <planeGeometry args={[15, 6]} />
-        <meshStandardMaterial color="#3a3a3a" roughness={0.9} />
-      </mesh>
-
-      {/* Back wall behind door */}
-      <mesh position={[0, 1, -10]}>
-        <planeGeometry args={[10, 6]} />
-        <meshStandardMaterial color="#2a2a2a" roughness={0.9} />
-      </mesh>
+      <pointLight position={[0, 3, scrollZ + 5]} intensity={1.2} color="#ffcc88" />
+      <directionalLight position={[5, 5, scrollZ + 10]} intensity={0.6} />
+      
+      <GraduationParty onBookClick={onBookClick} />
+      <SoccerGame />
+      <School />
+      <BirthdayParty />
+      <Hospital />
     </>
   );
 }
 
 export default function Door404RoomScene() {
-  const [showSuccess, setShowSuccess] = useState(false);
   const router = useRouter();
-
-  const handleReturnToHallway = () => {
-    router.push('/');
+  const [scrollZ, setScrollZ] = useState(5);
+  const [showBookMessage, setShowBookMessage] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  const MIN_Z = 5;
+  const MAX_Z = -75;
+  
+  const handleBookClick = () => {
+    setShowBookMessage(true);
+    setTimeout(() => setShowBookMessage(false), 3000);
   };
+  
+  const getCurrentScene = () => {
+    if (scrollZ > -5) return 0;
+    if (scrollZ > -25) return 1;
+    if (scrollZ > -45) return 2;
+    if (scrollZ > -65) return 3;
+    return 4;
+  };
+  
+  const currentScene = getCurrentScene();
+  const sceneNames = ['Graduation Party', 'Soccer Game', 'School', 'Birthday Party', 'Hospital'];
+  
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      setScrollZ(prev => clamp(prev - e.deltaY * 0.02, MAX_Z, MIN_Z));
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('wheel', handleWheel, { passive: false });
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener('wheel', handleWheel);
+      }
+    };
+  }, []);
 
   return (
-    <div className="w-full h-screen relative">
-      <Scene3D cameraPosition={[0, 1, 8]} cameraFov={75}>
+    <div ref={containerRef} className="w-full h-screen relative">
+      <Scene3D cameraPosition={[0, 1, 5]} cameraFov={75}>
         <color attach="background" args={['#1a1a1a']} />
-        <Door404RoomContent onSuccess={() => setShowSuccess(true)} />
+        <fog attach="fog" args={['#1a1a1a', 5, 25]} />
+        <ForwardScrollContent scrollZ={scrollZ} onBookClick={handleBookClick} />
       </Scene3D>
-
-      {/* Instructions */}
-      {!showSuccess && (
-        <div className="absolute bottom-4 left-4 text-white text-sm font-mono bg-black bg-opacity-50 p-3 rounded">
-          <div className="mb-1">🔢 Drag the runes to arrange them in order: 1, 2, 3</div>
-          <div>🚪 The door will open when the sequence is correct</div>
+      
+      {showBookMessage && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-900 bg-opacity-90 text-white p-6 rounded-lg text-center max-w-md">
+          <div className="text-xl font-bold mb-2">Medical Record</div>
+          <div className="text-sm">Patient admitted: [DATE]</div>
+          <div className="text-sm">Status: Comatose</div>
         </div>
       )}
 
-      {/* Success overlay */}
-      {showSuccess && (
-        <Overlay title="Routes restored">
-          <div className="flex justify-center mt-4">
-            <Button label="Return to Hallway" onClick={handleReturnToHallway} />
-          </div>
-        </Overlay>
-      )}
+      <div className="absolute top-4 left-4 text-white text-sm font-mono bg-black bg-opacity-70 p-3 rounded">
+        <div>Scene {currentScene + 1}/5: {sceneNames[currentScene]}</div>
+        <div className="mt-1">🖱️ Scroll to move forward</div>
+      </div>
+      
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-64">
+        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-white transition-all duration-300"
+            style={{ width: `${((MIN_Z - scrollZ) / (MIN_Z - MAX_Z)) * 100}%` }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
