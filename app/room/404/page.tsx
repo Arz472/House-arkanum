@@ -10,22 +10,36 @@ import Overlay from '@/components/ui/Overlay';
 import Button from '@/components/ui/Button';
 
 // Clickable paper clue component (handwritten notes)
-function PaperClue({ position, rotation, text, onRead }: { 
+function PaperClue({ position, rotation, text, onRead, audioFile }: { 
   position: [number, number, number]; 
   rotation?: [number, number, number];
   text: string;
   onRead: () => void;
+  audioFile?: string;
 }) {
   const [hovered, setHovered] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  const handleClick = (e: any) => {
+    e.stopPropagation();
+    onRead();
+    
+    // Play audio if provided
+    if (audioFile) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      audioRef.current = new Audio(audioFile);
+      audioRef.current.play();
+    }
+  };
   
   return (
     <mesh 
       position={position} 
       rotation={rotation || [0, 0, 0]}
-      onClick={(e) => {
-        e.stopPropagation();
-        onRead();
-      }}
+      onClick={handleClick}
       onPointerEnter={() => setHovered(true)}
       onPointerLeave={() => setHovered(false)}
     >
@@ -70,22 +84,36 @@ function MedicalStamp({ position, rotation, text, onRead }: {
 }
 
 // Blue medical book component
-function MedicalBook({ position, rotation, text, onRead }: { 
+function MedicalBook({ position, rotation, text, onRead, audioFile }: { 
   position: [number, number, number]; 
   rotation?: [number, number, number];
   text: string;
   onRead: () => void;
+  audioFile?: string;
 }) {
   const [hovered, setHovered] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  const handleClick = (e: any) => {
+    e.stopPropagation();
+    onRead();
+    
+    // Play audio if provided
+    if (audioFile) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      audioRef.current = new Audio(audioFile);
+      audioRef.current.play();
+    }
+  };
   
   return (
     <mesh 
       position={position} 
       rotation={rotation || [0, 0, 0]}
-      onClick={(e) => {
-        e.stopPropagation();
-        onRead();
-      }}
+      onClick={handleClick}
       onPointerEnter={() => setHovered(true)}
       onPointerLeave={() => setHovered(false)}
     >
@@ -261,6 +289,7 @@ function GraduationParty({ onReadClue, clueTexts, showWhiteNotes }: { onReadClue
           rotation={[-Math.PI / 2, 0, 0.3]}
           text={clueTexts[0]}
           onRead={() => onReadClue(0)}
+          audioFile="/KIRO_ASSETS/Voices/404 door/note1.mp3"
         />
       )}
       
@@ -269,6 +298,7 @@ function GraduationParty({ onReadClue, clueTexts, showWhiteNotes }: { onReadClue
         position={[0.8, -1, -0.8]}
         text={clueTexts[4]}
         onRead={() => onReadClue(4)}
+        audioFile="/KIRO_ASSETS/Voices/404 door/book1.mp3"
       />
     </group>
   );
@@ -443,6 +473,7 @@ function SoccerGame({ onReadClue, clueTexts, showWhiteNotes }: { onReadClue: (in
           rotation={[-Math.PI / 2, 0, -0.2]}
           text={clueTexts[1]}
           onRead={() => onReadClue(1)}
+          audioFile="/KIRO_ASSETS/Voices/404 door/note2.mp3"
         />
       )}
       
@@ -452,6 +483,7 @@ function SoccerGame({ onReadClue, clueTexts, showWhiteNotes }: { onReadClue: (in
         rotation={[-Math.PI / 2, 0, 0.1]}
         text={clueTexts[5]}
         onRead={() => onReadClue(5)}
+        audioFile="/KIRO_ASSETS/Voices/404 door/book2.mp3"
       />
     </group>
   );
@@ -634,6 +666,7 @@ function School({ onReadClue, clueTexts, showWhiteNotes }: { onReadClue: (index:
           rotation={[-Math.PI / 2, 0, 0.5]}
           text={clueTexts[2]}
           onRead={() => onReadClue(2)}
+          audioFile="/KIRO_ASSETS/Voices/404 door/note3.mp3"
         />
       )}
       
@@ -643,6 +676,7 @@ function School({ onReadClue, clueTexts, showWhiteNotes }: { onReadClue: (index:
         rotation={[-Math.PI / 2, 0, -0.3]}
         text={clueTexts[6]}
         onRead={() => onReadClue(6)}
+        audioFile="/KIRO_ASSETS/Voices/404 door/book3.mp3"
       />
     </group>
   );
@@ -699,6 +733,7 @@ function Hospital({ onReadClue, clueTexts, showWhiteNotes }: { onReadClue: (inde
           rotation={[-Math.PI / 2, 0, -0.4]}
           text={clueTexts[3]}
           onRead={() => onReadClue(3)}
+          audioFile="/KIRO_ASSETS/Voices/404 door/note4.mp3"
         />
       )}
       
@@ -708,6 +743,7 @@ function Hospital({ onReadClue, clueTexts, showWhiteNotes }: { onReadClue: (inde
         rotation={[-Math.PI / 2, 0, 0.2]}
         text={clueTexts[7]}
         onRead={() => onReadClue(7)}
+        audioFile="/KIRO_ASSETS/Voices/404 door/book4.mp3"
       />
     </group>
   );
