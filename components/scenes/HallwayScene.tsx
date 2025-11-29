@@ -497,9 +497,9 @@ function CameraController({ isWalking, isWalkingBack, isWalkingToAltar, targetPo
         camera.rotation.y = gyroRot.y;
         camera.rotation.x = gyroRot.x;
         
-        // Debug log
-        if (Math.abs(gyroRot.x) > 0.001 || Math.abs(gyroRot.y) > 0.001) {
-          console.log('Camera using gyro:', gyroRot);
+        // Debug log every 2 seconds
+        if (Math.floor(Date.now() / 2000) % 2 === 0 && (Math.abs(gyroRot.x) > 0.001 || Math.abs(gyroRot.y) > 0.001)) {
+          console.log('🎥 Camera using gyro:', { x: gyroRot.x.toFixed(3), y: gyroRot.y.toFixed(3) });
         }
       } else {
         // Desktop: Calculate target rotation based on mouse position

@@ -33,25 +33,21 @@ export default function TouchControls() {
     return () => window.removeEventListener('resize', checkMobile);
   }, [setIsMobile]);
 
-  // Auto-activate gyroscope listener after permission granted
+  // Listen for permission granted event from MobileWarning
   useEffect(() => {
-    if (isMobile && isGyroSupported && !gyroRequested) {
-      // Check if permission already granted (non-iOS or already approved)
-      const checkAndActivate = () => {
-        if (typeof DeviceOrientationEvent !== 'undefined') {
-          // For non-iOS devices, just start listening
-          if (typeof (DeviceOrientationEvent as any).requestPermission !== 'function') {
-            setGyroRequested(true);
-            requestPermission();
-          }
-        }
-      };
-      
-      // Delay to let MobileWarning show first
-      const timer = setTimeout(checkAndActivate, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isMobile, isGyroSupported, gyroRequested, requestPermission]);
+    const handlePermissionGranted = () => {
+      console.log('📱 TouchControls: Permission granted, activating gyroscope...');
+      if (!gyroRequested) {
+        setGyroRequested(true);
+        requestPermission().then(success => {
+          console.log('📱 Gyroscope activation:', success ? 'SUCCESS' : 'FAILED');
+        });
+      }
+    };
+
+    window.addEventListener('gyroPermissionGranted', handlePermissionGranted);
+    return () => window.removeEventListener('gyroPermissionGranted', handlePermissionGranted);
+  }, [gyroRequested, requestPermission]);
 
   // Convert gyroscope to full 360 camera rotation
   useEffect(() => {
@@ -76,16 +72,29 @@ export default function TouchControls() {
 
       gyroRotationRef.current = { x: rotationX, y: rotationY };
       
-      console.log('Gyro 360:', { 
-        alpha: alpha.toFixed(1), 
-        beta: beta.toFixed(1),
-        rotationY: rotationY.toFixed(3),
-        rotationX: rotationX.toFixed(3)
-      });
+      // Debug log every second instead of every frame
+      if (Math.floor(Date.now() / 1000) % 2 === 0) {
+        console.log('📱 Gyro 360:', { 
+          alpha: alpha.toFixed(1), 
+          beta: beta.toFixed(1),
+          rotationY: rotationY.toFixed(3),
+          rotationX: rotationX.toFixed(3),
+          isActive: isGyroActive
+        });
+      }
     }, 16); // ~60fps
 
     return () => clearInterval(interval);
   }, [isMobile, isGyroActive, orientation, gyroRotationRef]);
+
+  // Debug: Log when gyro becomes active
+  useEffect(() => {
+    if (isGyroActive) {
+      console.log('✅ Gyroscope is now ACTIVE');
+    } else {
+      console.log('⏸️ Gyroscope is INACTIVE');
+    }
+  }, [isGyroActive]);
 
   if (!isMobile) return null;
 
