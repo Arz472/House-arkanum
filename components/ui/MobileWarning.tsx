@@ -26,25 +26,33 @@ export default function MobileWarning() {
 
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 border-2 border-yellow-500 rounded-lg p-6 max-w-md">
-        <h2 className="text-2xl font-bold text-yellow-500 mb-4 font-mono text-center">
-          ⚠️ Desktop Recommended
+      <div className="bg-gray-900 border-2 border-cyan-500 rounded-lg p-6 max-w-md">
+        <h2 className="text-2xl font-bold text-cyan-400 mb-4 font-mono text-center">
+          📱 Mobile Controls Enabled
         </h2>
         <p className="text-gray-300 mb-4 font-mono text-sm leading-relaxed">
-          This game is optimized for desktop browsers with mouse and keyboard controls.
+          Touch controls are now available! Use the virtual joystick and swipe gestures to play.
         </p>
-        <p className="text-gray-400 mb-6 font-mono text-xs leading-relaxed">
-          Mobile experience may be limited. For the best experience, please play on a desktop computer.
+        <div className="bg-gray-800 p-4 rounded mb-4 text-xs font-mono text-gray-300 space-y-2">
+          <p>👈 <span className="text-cyan-400">Left side:</span> Virtual joystick for movement</p>
+          <p>👉 <span className="text-cyan-400">Right side:</span> Swipe to look around</p>
+          <p>📱 <span className="text-green-400">Gyroscope:</span> Move your phone to look (tap 📱 button)</p>
+          <p>⚡ <span className="text-cyan-400">Button:</span> Interact with objects</p>
+        </div>
+        <div className="bg-purple-900 bg-opacity-30 p-3 rounded border border-purple-700 mb-4">
+          <p className="font-mono text-xs text-purple-300">
+            🎮 <span className="font-bold">PRO TIP:</span> Enable gyroscope controls for an immersive experience - your camera will follow where you point your phone!
+          </p>
+        </div>
+        <p className="text-gray-400 mb-6 font-mono text-xs leading-relaxed text-center">
+          Desktop still recommended for best experience
         </p>
         <div className="flex flex-col gap-3">
           <Button 
-            label="Continue Anyway" 
+            label="Start Playing" 
             onClick={() => setDismissed(true)}
             variant="primary"
           />
-          <p className="text-center text-gray-500 text-xs font-mono">
-            Some features may not work properly on mobile
-          </p>
         </div>
       </div>
     </div>

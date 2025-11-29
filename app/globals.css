@@ -32,4 +32,24 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+  
+  /* Prevent pull-to-refresh */
+  html, body {
+    overscroll-behavior: none;
+  }
+  
+  /* Prevent text selection on touch */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
