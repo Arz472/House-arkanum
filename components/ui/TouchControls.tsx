@@ -230,10 +230,10 @@ export default function TouchControls() {
       {isGyroSupported && (
         <button
           onClick={handleGyroToggle}
-          className={`fixed top-8 right-8 w-14 h-14 rounded-full border-4 flex items-center justify-center text-2xl shadow-lg active:scale-95 transition-all ${
+          className={`fixed top-4 right-4 w-12 h-12 rounded-full border-2 flex items-center justify-center text-xl shadow-lg active:scale-90 transition-all ${
             gyroEnabled 
-              ? 'bg-green-600 bg-opacity-80 border-green-400' 
-              : 'bg-gray-700 bg-opacity-80 border-gray-500'
+              ? 'bg-green-600 bg-opacity-90 border-green-400' 
+              : 'bg-gray-800 bg-opacity-70 border-gray-600'
           }`}
           style={{ zIndex: 100 }}
           title={gyroEnabled ? 'Gyro ON' : 'Gyro OFF'}
@@ -255,23 +255,18 @@ export default function TouchControls() {
           });
           document.dispatchEvent(event);
         }}
-        className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-red-600 bg-opacity-80 border-4 border-red-400 flex items-center justify-center text-white font-bold text-xl shadow-lg active:scale-95 transition-transform"
+        className="fixed bottom-4 right-4 w-14 h-14 rounded-full bg-red-600 bg-opacity-90 border-2 border-red-400 flex items-center justify-center text-white font-bold text-2xl shadow-lg active:scale-90 transition-transform"
         style={{ zIndex: 100 }}
       >
         ⚡
       </button>
 
-      {/* Control Instructions */}
-      <div className="fixed bottom-8 left-8 bg-black bg-opacity-70 p-3 rounded text-xs text-gray-300 font-mono max-w-xs" style={{ zIndex: 100 }}>
-        <div className="mb-1">👈 Left: Move</div>
+      {/* Minimal Control Hint */}
+      <div className="fixed bottom-4 left-4 bg-black bg-opacity-60 px-3 py-2 rounded text-xs text-gray-400 font-mono" style={{ zIndex: 100 }}>
         {gyroEnabled ? (
-          <div className="mb-1 text-green-400">📱 Gyro: Look (move phone)</div>
+          <div className="text-green-400">📱 Gyro Active</div>
         ) : (
-          <div className="mb-1">👉 Right: Look (swipe)</div>
-        )}
-        <div>⚡ Button: Interact</div>
-        {isGyroSupported && !gyroEnabled && (
-          <div className="mt-2 text-cyan-400 text-xs">💡 Tap 📱 for gyro controls</div>
+          <div>👈 Move | 👉 Look</div>
         )}
       </div>
     </>

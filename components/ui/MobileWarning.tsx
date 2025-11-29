@@ -25,35 +25,58 @@ export default function MobileWarning() {
   if (!isMobile || dismissed) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 border-2 border-cyan-500 rounded-lg p-6 max-w-md">
-        <h2 className="text-2xl font-bold text-cyan-400 mb-4 font-mono text-center">
-          📱 Mobile Controls Enabled
+    <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-gray-900 border-2 border-cyan-500 rounded-lg p-4 sm:p-6 max-w-sm w-full my-auto">
+        <h2 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-3 font-mono text-center">
+          📱 Mobile Mode
         </h2>
-        <p className="text-gray-300 mb-4 font-mono text-sm leading-relaxed">
-          Touch controls are now available! Use the virtual joystick and swipe gestures to play.
+        
+        <p className="text-gray-300 mb-3 font-mono text-xs sm:text-sm leading-relaxed text-center">
+          Touch controls enabled
         </p>
-        <div className="bg-gray-800 p-4 rounded mb-4 text-xs font-mono text-gray-300 space-y-2">
-          <p>👈 <span className="text-cyan-400">Left side:</span> Virtual joystick for movement</p>
-          <p>👉 <span className="text-cyan-400">Right side:</span> Swipe to look around</p>
-          <p>📱 <span className="text-green-400">Gyroscope:</span> Move your phone to look (tap 📱 button)</p>
-          <p>⚡ <span className="text-cyan-400">Button:</span> Interact with objects</p>
+        
+        <div className="bg-gray-800 p-3 rounded mb-3 space-y-2">
+          <div className="flex items-start gap-2 text-xs">
+            <span className="text-lg">👈</span>
+            <p className="text-gray-300 font-mono flex-1">
+              <span className="text-cyan-400 font-bold">Left:</span> Move
+            </p>
+          </div>
+          <div className="flex items-start gap-2 text-xs">
+            <span className="text-lg">👉</span>
+            <p className="text-gray-300 font-mono flex-1">
+              <span className="text-cyan-400 font-bold">Right:</span> Look
+            </p>
+          </div>
+          <div className="flex items-start gap-2 text-xs">
+            <span className="text-lg">📱</span>
+            <p className="text-gray-300 font-mono flex-1">
+              <span className="text-green-400 font-bold">Gyro:</span> Move phone to look
+            </p>
+          </div>
+          <div className="flex items-start gap-2 text-xs">
+            <span className="text-lg">⚡</span>
+            <p className="text-gray-300 font-mono flex-1">
+              <span className="text-red-400 font-bold">Button:</span> Interact
+            </p>
+          </div>
         </div>
-        <div className="bg-purple-900 bg-opacity-30 p-3 rounded border border-purple-700 mb-4">
-          <p className="font-mono text-xs text-purple-300">
-            🎮 <span className="font-bold">PRO TIP:</span> Enable gyroscope controls for an immersive experience - your camera will follow where you point your phone!
+        
+        <div className="bg-cyan-900 bg-opacity-20 p-2 rounded border border-cyan-700 mb-4">
+          <p className="font-mono text-xs text-cyan-300 text-center">
+            💡 Tap 📱 (top-right) for gyro controls
           </p>
         </div>
-        <p className="text-gray-400 mb-6 font-mono text-xs leading-relaxed text-center">
-          Desktop still recommended for best experience
+        
+        <Button 
+          label="Start Playing" 
+          onClick={() => setDismissed(true)}
+          variant="primary"
+        />
+        
+        <p className="text-gray-500 mt-3 font-mono text-xs text-center">
+          Desktop recommended for best experience
         </p>
-        <div className="flex flex-col gap-3">
-          <Button 
-            label="Start Playing" 
-            onClick={() => setDismissed(true)}
-            variant="primary"
-          />
-        </div>
       </div>
     </div>
   );
