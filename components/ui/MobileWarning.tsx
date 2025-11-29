@@ -37,34 +37,22 @@ export default function MobileWarning() {
         
         <div className="bg-gray-800 p-3 rounded mb-3 space-y-2">
           <div className="flex items-start gap-2 text-xs">
-            <span className="text-lg">👈</span>
-            <p className="text-gray-300 font-mono flex-1">
-              <span className="text-cyan-400 font-bold">Left:</span> Move
-            </p>
-          </div>
-          <div className="flex items-start gap-2 text-xs">
-            <span className="text-lg">👉</span>
-            <p className="text-gray-300 font-mono flex-1">
-              <span className="text-cyan-400 font-bold">Right:</span> Look
-            </p>
-          </div>
-          <div className="flex items-start gap-2 text-xs">
             <span className="text-lg">📱</span>
             <p className="text-gray-300 font-mono flex-1">
-              <span className="text-green-400 font-bold">Gyro:</span> Move phone to look
+              <span className="text-green-400 font-bold">Move your phone</span> to look around 360°
             </p>
           </div>
           <div className="flex items-start gap-2 text-xs">
             <span className="text-lg">⚡</span>
             <p className="text-gray-300 font-mono flex-1">
-              <span className="text-red-400 font-bold">Button:</span> Interact
+              <span className="text-red-400 font-bold">Tap button</span> to interact with doors
             </p>
           </div>
         </div>
         
-        <div className="bg-cyan-900 bg-opacity-20 p-2 rounded border border-cyan-700 mb-4">
-          <p className="font-mono text-xs text-cyan-300 text-center">
-            💡 Tap 📱 (top-right) for gyro controls
+        <div className="bg-green-900 bg-opacity-20 p-2 rounded border border-green-700 mb-4">
+          <p className="font-mono text-xs text-green-300 text-center">
+            🎮 Gyroscope controls will activate automatically
           </p>
         </div>
         
