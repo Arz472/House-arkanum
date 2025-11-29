@@ -1,16 +1,14 @@
 'use client';
 
-import { createContext, useContext, useState, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useRef, ReactNode, MutableRefObject } from 'react';
 
 interface MobileControlsContextType {
   isMobile: boolean;
   setIsMobile: (value: boolean) => void;
   gyroEnabled: boolean;
   setGyroEnabled: (value: boolean) => void;
-  gyroRotation: { x: number; y: number };
-  setGyroRotation: (rotation: { x: number; y: number }) => void;
-  touchLookDelta: { x: number; y: number };
-  setTouchLookDelta: (delta: { x: number; y: number }) => void;
+  gyroRotationRef: MutableRefObject<{ x: number; y: number }>;
+  touchLookDeltaRef: MutableRefObject<{ x: number; y: number }>;
 }
 
 const MobileControlsContext = createContext<MobileControlsContextType | null>(null);
@@ -18,16 +16,8 @@ const MobileControlsContext = createContext<MobileControlsContextType | null>(nu
 export function MobileControlsProvider({ children }: { children: ReactNode }) {
   const [isMobile, setIsMobile] = useState(false);
   const [gyroEnabled, setGyroEnabled] = useState(false);
-  const gyroRotation = useRef({ x: 0, y: 0 });
-  const touchLookDelta = useRef({ x: 0, y: 0 });
-
-  const setGyroRotation = (rotation: { x: number; y: number }) => {
-    gyroRotation.current = rotation;
-  };
-
-  const setTouchLookDelta = (delta: { x: number; y: number }) => {
-    touchLookDelta.current = delta;
-  };
+  const gyroRotationRef = useRef({ x: 0, y: 0 });
+  const touchLookDeltaRef = useRef({ x: 0, y: 0 });
 
   return (
     <MobileControlsContext.Provider
@@ -36,10 +26,8 @@ export function MobileControlsProvider({ children }: { children: ReactNode }) {
         setIsMobile,
         gyroEnabled,
         setGyroEnabled,
-        gyroRotation: gyroRotation.current,
-        setGyroRotation,
-        touchLookDelta: touchLookDelta.current,
-        setTouchLookDelta
+        gyroRotationRef,
+        touchLookDeltaRef
       }}
     >
       {children}

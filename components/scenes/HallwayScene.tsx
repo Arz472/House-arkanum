@@ -368,7 +368,7 @@ interface CameraControllerProps {
 
 function CameraController({ isWalking, isWalkingBack, isWalkingToAltar, targetPosition, targetDoorPosition, onWalkComplete, onWalkBackComplete }: CameraControllerProps) {
   const { camera } = useThree();
-  const { isMobile, gyroEnabled, gyroRotation, touchLookDelta } = useMobileControls();
+  const { isMobile, gyroEnabled, gyroRotationRef, touchLookDeltaRef } = useMobileControls();
   const mousePos = useRef({ x: 0, y: 0 });
   const targetRotation = useRef({ x: 0, y: 0 });
   const walkProgress = useRef(0);
@@ -493,18 +493,28 @@ function CameraController({ isWalking, isWalkingBack, isWalkingToAltar, targetPo
       // Normal parallax behavior when not walking
       if (isMobile && gyroEnabled) {
         // Use gyroscope rotation (already calculated to match mouse parallax)
-        camera.rotation.y = gyroRotation.y;
-        camera.rotation.x = gyroRotation.x;
-      } else if (isMobile && touchLookDelta.x !== 0 && touchLookDelta.y !== 0) {
+        const gyroRot = gyroRotationRef.current;
+        camera.rotation.y = gyroRot.y;
+        camera.rotation.x = gyroRot.x;
+        
+        // Debug log
+        if (Math.abs(gyroRot.x) > 0.001 || Math.abs(gyroRot.y) > 0.001) {
+          console.log('Camera using gyro:', gyroRot);
+        }
+      } else if (isMobile && (touchLookDeltaRef.current.x !== 0 || touchLookDeltaRef.current.y !== 0)) {
         // Use touch look delta
-        targetRotation.current.y -= touchLookDelta.x;
-        targetRotation.current.x -= touchLookDelta.y;
+        const touchDelta = touchLookDeltaRef.current;
+        targetRotation.current.y -= touchDelta.x;
+        targetRotation.current.x -= touchDelta.y;
         
         // Clamp vertical rotation
         targetRotation.current.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, targetRotation.current.x));
         
         camera.rotation.y = targetRotation.current.y;
         camera.rotation.x = targetRotation.current.x;
+        
+        // Reset delta after applying
+        touchLookDeltaRef.current = { x: 0, y: 0 };
       } else {
         // Desktop: Calculate target rotation based on mouse position
         // Negate x to fix left/right inversion - mouse right = camera right

@@ -16,8 +16,8 @@ export default function TouchControls() {
     setIsMobile,
     gyroEnabled,
     setGyroEnabled,
-    setGyroRotation,
-    setTouchLookDelta
+    gyroRotationRef,
+    touchLookDeltaRef
   } = useMobileControls();
   
   const {
@@ -71,11 +71,21 @@ export default function TouchControls() {
       const rotationY = -normalizedX * 0.1;
       const rotationX = normalizedY * 0.05;
 
-      setGyroRotation({ x: rotationX, y: rotationY });
+      gyroRotationRef.current = { x: rotationX, y: rotationY };
+      
+      // Debug log
+      console.log('Gyro:', { 
+        gamma: orientation.gamma.toFixed(1), 
+        beta: orientation.beta.toFixed(1),
+        normalizedX: normalizedX.toFixed(2),
+        normalizedY: normalizedY.toFixed(2),
+        rotationY: rotationY.toFixed(3),
+        rotationX: rotationX.toFixed(3)
+      });
     }, 16); // ~60fps
 
     return () => clearInterval(interval);
-  }, [isMobile, isGyroActive, gyroEnabled, orientation, setGyroRotation]);
+  }, [isMobile, isGyroActive, gyroEnabled, orientation, gyroRotationRef]);
 
   const handleGyroToggle = async () => {
     if (!isMobile) return;
@@ -91,7 +101,7 @@ export default function TouchControls() {
       setGyroEnabled(false);
       setIsActive(false);
       initialOrientation.current = null;
-      setGyroRotation({ x: 0, y: 0 });
+      gyroRotationRef.current = { x: 0, y: 0 };
     }
   };
 
@@ -154,7 +164,7 @@ export default function TouchControls() {
           const deltaX = touch.clientX - lastLookPos.current.x;
           const deltaY = touch.clientY - lastLookPos.current.y;
           
-          setTouchLookDelta({ x: deltaX * 0.003, y: deltaY * 0.003 });
+          touchLookDeltaRef.current = { x: deltaX * 0.003, y: deltaY * 0.003 };
           
           lastLookPos.current = { x: touch.clientX, y: touch.clientY };
         }
@@ -176,7 +186,7 @@ export default function TouchControls() {
         
         if (touch.identifier === lookTouchId.current) {
           lookTouchId.current = null;
-          setTouchLookDelta({ x: 0, y: 0 });
+          touchLookDeltaRef.current = { x: 0, y: 0 };
         }
       });
     };
@@ -190,7 +200,7 @@ export default function TouchControls() {
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isMobile, gyroEnabled, setTouchLookDelta]);
+  }, [isMobile, gyroEnabled, touchLookDeltaRef]);
 
   if (!isMobile) return null;
 
