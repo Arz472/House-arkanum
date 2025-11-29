@@ -89,8 +89,8 @@ export default function TouchControls() {
       // Use gamma (left-right tilt) for horizontal rotation
       // Use beta (forward-back tilt) for vertical rotation
       const sensitivity = 0.02;
-      cameraRotationY -= deltaGamma * sensitivity;
-      cameraRotationX += deltaBeta * sensitivity * 0.5;
+      cameraRotationY += deltaGamma * sensitivity; // Inverted for natural feel
+      cameraRotationX -= deltaBeta * sensitivity * 0.5; // Inverted for natural feel
 
       // Clamp vertical rotation
       cameraRotationX = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, cameraRotationX));
