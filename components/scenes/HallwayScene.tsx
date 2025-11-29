@@ -1674,6 +1674,10 @@ function LoopRoomPopup({ popupRoomName, onEnter, onCancel }: {
       audio = new Audio('/KIRO_ASSETS/Voices/memory door/memoryintro.mp3');
       audio.volume = 0.7;
       audio.play().catch(err => console.log('Audio play error:', err));
+    } else if (popupRoomName === 'Mirror') {
+      audio = new Audio('/KIRO_ASSETS/Voices/mirror door/mirror intro.mp3');
+      audio.volume = 0.7;
+      audio.play().catch(err => console.log('Audio play error:', err));
     }
     
     return () => {

@@ -168,23 +168,60 @@ export default function CommitAltarScene() {
           </div>
         </div>
       ) : (
-        <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center z-10">
-          <div className="pointer-events-auto bg-gray-900/95 border-2 border-green-400 p-8 rounded-lg shadow-2xl max-w-lg">
-            <h1 className="text-4xl font-bold text-green-400 mb-4 text-center font-mono">
-              Commit successful
+        <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center z-10 overflow-hidden">
+          <div className="pointer-events-auto bg-gray-900/95 border-2 border-green-400 p-8 rounded-lg shadow-2xl max-w-2xl max-h-[80vh] overflow-y-auto">
+            <h1 className="text-5xl font-bold text-green-400 mb-6 text-center font-mono">
+              Thank You for Playing!
             </h1>
-            <p className="text-2xl text-cyan-400 mb-6 text-center font-mono">
-              Haunted codebase stabilized
-            </p>
             
-            <div className="flex gap-4 justify-center">
+            <div className="space-y-6 text-center mb-8">
+              <p className="text-xl text-cyan-400 font-mono">
+                You've successfully debugged the haunted codebase.
+              </p>
+              <p className="text-lg text-gray-300 font-mono">
+                We hope you enjoyed this journey through<br />
+                the twisted corridors of broken code.
+              </p>
+            </div>
+            
+            <div className="border-t-2 border-cyan-500 pt-6 mb-6">
+              <h2 className="text-3xl font-bold text-cyan-400 mb-4 text-center font-mono">
+                Credits
+              </h2>
+              
+              <div className="space-y-4 text-center">
+                <div>
+                  <p className="text-sm text-gray-400 font-mono mb-1">CREATED BY</p>
+                  <p className="text-2xl text-white font-bold font-mono">Ahmadreza Azizi</p>
+                  <p className="text-sm text-cyan-400 font-mono">Solo Engineer</p>
+                </div>
+                
+                <div className="pt-4">
+                  <p className="text-sm text-gray-400 font-mono mb-1">DEVELOPED FOR</p>
+                  <p className="text-xl text-purple-400 font-bold font-mono">Kiroween Hackathon 2025</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="border-t-2 border-purple-500 pt-6 mb-6">
+              <p className="text-lg text-yellow-400 text-center font-mono mb-2">
+                Special Thanks
+              </p>
+              <p className="text-md text-gray-300 text-center font-mono leading-relaxed">
+                To all the judges and players who took the time<br />
+                to explore this haunted experience.<br />
+                Your feedback and support mean everything!
+              </p>
+            </div>
+            
+            <div className="flex gap-4 justify-center mt-8">
               <Button
                 label="Return to Hallway"
                 onClick={handleReturn}
                 variant="primary"
               />
               <Button
-                label="Restart"
+                label="Play Again"
                 onClick={handleRestart}
                 variant="secondary"
               />

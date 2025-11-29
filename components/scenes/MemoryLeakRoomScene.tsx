@@ -2289,6 +2289,8 @@ export default function MemoryLeakRoomScene() {
     
     if (nextPhase === 'complete') {
       setShowComplete(true);
+      // Play "stay" completion voice line
+      playVoiceLine('stay');
     }
   };
 
