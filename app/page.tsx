@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import MobileWarning from '@/components/ui/MobileWarning';
 
 const HallwayScene = dynamic(() => import('@/components/scenes/HallwayScene'), {
   ssr: false,
@@ -12,5 +13,10 @@ const HallwayScene = dynamic(() => import('@/components/scenes/HallwayScene'), {
 });
 
 export default function Home() {
-  return <HallwayScene />;
+  return (
+    <>
+      <MobileWarning />
+      <HallwayScene />
+    </>
+  );
 }
