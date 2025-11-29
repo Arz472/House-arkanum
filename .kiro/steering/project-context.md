@@ -60,3 +60,12 @@ This is a browser-based 3D horror experience built for the Kiroween hackathon. T
 - Shared utilities: `lib/`
 - State management: `store/`
 - Route pages: `app/` (Next.js App Router)
+
+## Development Workflow
+1. Define requirements in `.kiro/specs/{feature}/requirements.md`
+2. Design architecture in `.kiro/specs/{feature}/design.md`
+3. Break down into tasks in `.kiro/specs/{feature}/tasks.md`
+4. Implement features following steering guidelines
+5. Write tests (unit + property-based)
+6. Update task status as work progresses
+7. Verify performance budgets before commit
