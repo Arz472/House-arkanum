@@ -31,17 +31,20 @@ export default function Scene3D({
 
   return (
     <Canvas
-      dpr={isMobile ? [1, 1] : [1, 1.5]}
+      dpr={[1, 1.5]} // Limit max pixel ratio for performance
       camera={{
         position: cameraPosition,
         fov: isMobile ? cameraFov + 10 : cameraFov,
       }}
       gl={{
-        antialias: !isMobile,
-        powerPreference: isMobile ? 'low-power' : 'high-performance',
+        antialias: false, // Disable antialiasing for better performance
+        powerPreference: 'high-performance',
+        alpha: false,
+        stencil: false,
+        depth: true,
       }}
       performance={{
-        min: isMobile ? 0.5 : 0.75,
+        min: 0.5, // Allow frame rate to drop to maintain performance
       }}
     >
       {children}

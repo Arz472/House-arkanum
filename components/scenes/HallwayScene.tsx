@@ -118,7 +118,7 @@ function Door({ config, onClick, isFixed }: DoorProps) {
         return (
           <>
             <mesh position={[0, 0, 0.15]}>
-              <torusGeometry args={[0.3, 0.05, 16, 32]} />
+              <torusGeometry args={[0.3, 0.05, 8, 16]} />
               <meshStandardMaterial 
                 color={config.color}
                 emissive={config.color}
@@ -126,7 +126,7 @@ function Door({ config, onClick, isFixed }: DoorProps) {
               />
             </mesh>
             <mesh position={[0, 0, 0.2]}>
-              <torusGeometry args={[0.2, 0.03, 16, 32]} />
+              <torusGeometry args={[0.2, 0.03, 8, 16]} />
               <meshStandardMaterial 
                 color={config.color}
                 emissive={config.color}
@@ -199,7 +199,7 @@ function Door({ config, onClick, isFixed }: DoorProps) {
         return (
           <>
             <mesh position={[-0.3, 0.5, 0.15]}>
-              <sphereGeometry args={[0.06, 12, 12]} />
+              <sphereGeometry args={[0.06, 6, 6]} />
               <meshStandardMaterial 
                 color="#4488ff"
                 emissive="#2266ff"
@@ -209,7 +209,7 @@ function Door({ config, onClick, isFixed }: DoorProps) {
               />
             </mesh>
             <mesh position={[0, 0.3, 0.15]}>
-              <sphereGeometry args={[0.08, 12, 12]} />
+              <sphereGeometry args={[0.08, 6, 6]} />
               <meshStandardMaterial 
                 color="#4488ff"
                 emissive="#2266ff"
@@ -219,7 +219,7 @@ function Door({ config, onClick, isFixed }: DoorProps) {
               />
             </mesh>
             <mesh position={[0.3, 0.4, 0.15]}>
-              <sphereGeometry args={[0.05, 12, 12]} />
+              <sphereGeometry args={[0.05, 6, 6]} />
               <meshStandardMaterial 
                 color="#4488ff"
                 emissive="#2266ff"
@@ -795,11 +795,11 @@ function WallCracks({ position, rotation }: { position: [number, number, number]
   );
 }
 
-// Multi-layered floating dust and mist particles
+// Multi-layered floating dust and mist particles (optimized)
 function DustParticles() {
   const dustRef = useRef<THREE.Points>(null);
   const mistRef = useRef<THREE.Points>(null);
-  const particleCount = 200;
+  const particleCount = 50; // Reduced from 200 for better performance
   
   const dustPositions = new Float32Array(particleCount * 3);
   const mistPositions = new Float32Array(particleCount * 3);
