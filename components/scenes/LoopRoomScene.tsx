@@ -8,6 +8,7 @@ import Scene3D from '@/components/Scene3D';
 import Overlay from '@/components/ui/Overlay';
 import Button from '@/components/ui/Button';
 import { useGameState } from '@/store/gameState';
+import { useMobileControls } from '@/lib/MobileControlsContext';
 import * as THREE from 'three';
 
 
@@ -409,10 +410,13 @@ function Ghost({ onClick, clickCount, isVisible, positionRef, isNearLantern, cor
 }
 
 function CameraController() {
+  const { isMobile, gyroRotationRef } = useMobileControls();
   const mousePos = useRef({ x: 0, y: 0 });
   const targetRotation = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
+    if (isMobile) return; // Skip mouse tracking on mobile
+
     const handleMouseMove = (event: MouseEvent) => {
       // Normalize mouse position to -1 to 1 range
       mousePos.current.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -421,17 +425,24 @@ function CameraController() {
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, [isMobile]);
 
   useFrame(({ camera }) => {
-    // Calculate target rotation based on mouse position - full 360 horizontal only
-    targetRotation.current.y = -mousePos.current.x * Math.PI;
-    // Reduce vertical tilt significantly for smoother feel
-    targetRotation.current.x = mousePos.current.y * 0.1;
+    if (isMobile) {
+      // Mobile: Use gyroscope for 360 degree rotation
+      const gyroRot = gyroRotationRef.current;
+      camera.rotation.y = gyroRot.y;
+      camera.rotation.x = gyroRot.x;
+    } else {
+      // Desktop: Calculate target rotation based on mouse position - full 360 horizontal only
+      targetRotation.current.y = -mousePos.current.x * Math.PI;
+      // Reduce vertical tilt significantly for smoother feel
+      targetRotation.current.x = mousePos.current.y * 0.1;
 
-    // Much smoother interpolation
-    camera.rotation.y += (targetRotation.current.y - camera.rotation.y) * 0.08;
-    camera.rotation.x += (targetRotation.current.x - camera.rotation.x) * 0.08;
+      // Much smoother interpolation
+      camera.rotation.y += (targetRotation.current.y - camera.rotation.y) * 0.08;
+      camera.rotation.x += (targetRotation.current.x - camera.rotation.x) * 0.08;
+    }
     
     // Lock Z rotation to prevent any roll/tilt
     camera.rotation.z = 0;
