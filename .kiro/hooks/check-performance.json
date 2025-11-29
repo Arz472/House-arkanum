@@ -1,0 +1,13 @@
+{
+  "name": "Performance Budget Check",
+  "description": "Remind to check triangle count and performance metrics when modifying 3D scenes",
+  "trigger": {
+    "type": "onFileSave",
+    "filePattern": "components/scenes/**/*.tsx"
+  },
+  "action": {
+    "type": "message",
+    "message": "Remember to verify:\n- Triangle count < 60,000\n- Max 2 lights per scene\n- Proper geometry disposal in useEffect cleanup"
+  },
+  "enabled": true
+}

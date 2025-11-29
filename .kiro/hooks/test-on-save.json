@@ -1,0 +1,13 @@
+{
+  "name": "Run Tests on Save",
+  "description": "Automatically run tests when scene files are saved to catch bugs early",
+  "trigger": {
+    "type": "onFileSave",
+    "filePattern": "**/*.{ts,tsx}"
+  },
+  "action": {
+    "type": "command",
+    "command": "npm test"
+  },
+  "enabled": true
+}
