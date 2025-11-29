@@ -1,0 +1,13 @@
+{
+  "name": "Spec Task Completion Sync",
+  "description": "Prompt to update task status in specs when implementation files are modified",
+  "trigger": {
+    "type": "onFileSave",
+    "filePattern": "components/scenes/**Scene.tsx"
+  },
+  "action": {
+    "type": "message",
+    "message": "📋 Don't forget to update task status!\n\nIf you completed a feature, mark it done in:\n- .kiro/specs/haunted-codebase/tasks.md\n- .kiro/specs/memory-leak-room/tasks.md\n- .kiro/specs/vertical-404-room/tasks.md\n\nThis keeps your spec-driven development workflow in sync."
+  },
+  "enabled": true
+}

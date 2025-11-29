@@ -1,0 +1,14 @@
+{
+  "name": "Pre-Commit Build Verification",
+  "description": "Run Next.js build before commits to catch TypeScript errors and build issues early",
+  "trigger": {
+    "type": "manual",
+    "buttonLabel": "🔨 Verify Build"
+  },
+  "action": {
+    "type": "command",
+    "command": "npm run build"
+  },
+  "enabled": true,
+  "notes": "Manual trigger - click button before committing major changes to ensure production build succeeds"
+}

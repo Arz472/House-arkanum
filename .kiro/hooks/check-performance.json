@@ -1,13 +1,13 @@
 {
   "name": "Performance Budget Check",
-  "description": "Remind to check triangle count and performance metrics when modifying 3D scenes",
+  "description": "Automatically remind about performance constraints when modifying 3D scene components to maintain 60 FPS target",
   "trigger": {
     "type": "onFileSave",
     "filePattern": "components/scenes/**/*.tsx"
   },
   "action": {
     "type": "message",
-    "message": "Remember to verify:\n- Triangle count < 60,000\n- Max 2 lights per scene\n- Proper geometry disposal in useEffect cleanup"
+    "message": "🎮 Performance Budget Reminder:\n\n✓ Triangle count < 60,000 per scene\n✓ Max 2 lights (1 ambient + 1 directional)\n✓ DPR capped at [1, 1.5] on Canvas\n✓ Geometry/material disposal in useEffect cleanup\n✓ Use shared geometries from lib/sharedGeometry.ts\n\nRun 'npm test' to verify performance properties pass."
   },
   "enabled": true
 }

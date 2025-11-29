@@ -1,0 +1,13 @@
+{
+  "name": "TypeScript Diagnostics on Scene Edit",
+  "description": "Check for TypeScript errors when editing scene files to catch type issues immediately",
+  "trigger": {
+    "type": "onFileSave",
+    "filePattern": "components/scenes/**/*.tsx"
+  },
+  "action": {
+    "type": "message",
+    "message": "🔍 Running TypeScript diagnostics...\n\nCheck the Problems panel for any type errors.\n\nCommon issues in 3D scenes:\n- Missing Three.js type imports\n- Incorrect Vector3 tuple types [x, y, z]\n- useFrame callback signatures\n- useGLTF return type handling"
+  },
+  "enabled": true
+}

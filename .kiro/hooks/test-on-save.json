@@ -1,13 +1,14 @@
 {
-  "name": "Run Tests on Save",
-  "description": "Automatically run tests when scene files are saved to catch bugs early",
+  "name": "Auto-Test on Component Save",
+  "description": "Run test suite automatically when components or tests are modified to catch regressions immediately",
   "trigger": {
     "type": "onFileSave",
-    "filePattern": "**/*.{ts,tsx}"
+    "filePattern": "{components,lib,store}/**/*.{ts,tsx}"
   },
   "action": {
     "type": "command",
     "command": "npm test"
   },
-  "enabled": true
+  "enabled": false,
+  "notes": "Disabled by default to avoid slowing down rapid iteration. Enable when working on critical bug fixes."
 }
