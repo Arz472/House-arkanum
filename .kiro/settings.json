@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "description": "Kiro project settings for House of Arkanum",
+  "modules": {
+    "specs": "./specs",
+    "hooks": "./hooks",
+    "steering": "./steering"
+  }
+}
