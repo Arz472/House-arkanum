@@ -49,43 +49,80 @@ export default function TouchControls() {
     return () => window.removeEventListener('gyroPermissionGranted', handlePermissionGranted);
   }, [gyroRequested, requestPermission]);
 
-  // Convert gyroscope to full 360 camera rotation
+  // Use deviceorientation event directly for better compatibility
   useEffect(() => {
     if (!isMobile || !isGyroActive) return;
 
-    const interval = setInterval(() => {
-      // Use absolute orientation for 360 degree rotation
-      // Alpha: compass direction (0-360) - horizontal rotation
-      // Beta: front-back tilt (-180 to 180) - vertical rotation
-      
-      const alpha = orientation.alpha || 0;
-      const beta = orientation.beta || 0;
-      
-      // Convert to radians and map to camera rotation
-      // Alpha controls horizontal rotation (full 360)
-      const rotationY = -(alpha * Math.PI / 180);
-      
-      // Beta controls vertical rotation (clamped)
-      // Adjust beta so 0 is looking forward, positive is up, negative is down
-      const adjustedBeta = beta - 90; // Phone held upright = 0 degrees
-      const rotationX = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, adjustedBeta * Math.PI / 180));
+    let lastAlpha = 0;
+    let lastBeta = 0;
+    let lastGamma = 0;
+    let initialized = false;
+    let cameraRotationY = 0;
+    let cameraRotationX = 0;
 
-      gyroRotationRef.current = { x: rotationX, y: rotationY };
-      
-      // Debug log every second instead of every frame
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      const alpha = event.alpha || 0;
+      const beta = event.beta || 0;
+      const gamma = event.gamma || 0;
+
+      // Initialize on first reading
+      if (!initialized && (alpha !== 0 || beta !== 0 || gamma !== 0)) {
+        lastAlpha = alpha;
+        lastBeta = beta;
+        lastGamma = gamma;
+        initialized = true;
+        console.log('📱 Gyro initialized:', { alpha, beta, gamma });
+        return;
+      }
+
+      if (!initialized) return;
+
+      // Calculate deltas
+      let deltaAlpha = alpha - lastAlpha;
+      const deltaBeta = beta - lastBeta;
+      const deltaGamma = gamma - lastGamma;
+
+      // Handle alpha wraparound (0-360)
+      if (deltaAlpha > 180) deltaAlpha -= 360;
+      if (deltaAlpha < -180) deltaAlpha += 360;
+
+      // Use gamma (left-right tilt) for horizontal rotation
+      // Use beta (forward-back tilt) for vertical rotation
+      const sensitivity = 0.02;
+      cameraRotationY -= deltaGamma * sensitivity;
+      cameraRotationX += deltaBeta * sensitivity * 0.5;
+
+      // Clamp vertical rotation
+      cameraRotationX = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, cameraRotationX));
+
+      gyroRotationRef.current = { x: cameraRotationX, y: cameraRotationY };
+
+      // Update last values
+      lastAlpha = alpha;
+      lastBeta = beta;
+      lastGamma = gamma;
+
+      // Debug log
       if (Math.floor(Date.now() / 1000) % 2 === 0) {
-        console.log('📱 Gyro 360:', { 
+        console.log('📱 Gyro:', { 
           alpha: alpha.toFixed(1), 
           beta: beta.toFixed(1),
-          rotationY: rotationY.toFixed(3),
-          rotationX: rotationX.toFixed(3),
-          isActive: isGyroActive
+          gamma: gamma.toFixed(1),
+          deltaGamma: deltaGamma.toFixed(2),
+          deltaBeta: deltaBeta.toFixed(2),
+          camY: cameraRotationY.toFixed(3),
+          camX: cameraRotationX.toFixed(3)
         });
       }
-    }, 16); // ~60fps
+    };
 
-    return () => clearInterval(interval);
-  }, [isMobile, isGyroActive, orientation, gyroRotationRef]);
+    window.addEventListener('deviceorientation', handleOrientation);
+    console.log('📱 Listening for device orientation events...');
+
+    return () => {
+      window.removeEventListener('deviceorientation', handleOrientation);
+    };
+  }, [isMobile, isGyroActive, gyroRotationRef]);
 
   // Debug: Log when gyro becomes active
   useEffect(() => {
