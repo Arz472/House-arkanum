@@ -1670,6 +1670,10 @@ function LoopRoomPopup({ popupRoomName, onEnter, onCancel }: {
       audio = new Audio('/KIRO_ASSETS/Voices/404intro.mp3');
       audio.volume = 0.7;
       audio.play().catch(err => console.log('Audio play error:', err));
+    } else if (popupRoomName === 'Leak') {
+      audio = new Audio('/KIRO_ASSETS/Voices/memory door/memoryintro.mp3');
+      audio.volume = 0.7;
+      audio.play().catch(err => console.log('Audio play error:', err));
     }
     
     return () => {
@@ -1723,7 +1727,9 @@ function LoopRoomPopup({ popupRoomName, onEnter, onCancel }: {
           title: 'The Memory Leak',
           description: (
             <p className="text-gray-300 font-mono mb-6 text-center">
-              Something is consuming everything. Stop it before it's too late.
+              The core is unstable. Memory usage at 100%.<br />
+              Seal the rifts, restore components, and stabilize the system<br />
+              before everything crashes.
             </p>
           )
         };
