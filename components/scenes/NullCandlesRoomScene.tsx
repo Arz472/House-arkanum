@@ -150,7 +150,7 @@ function CandleMonster({
       {/* Visual indicator when vulnerable (in light) */}
       {!isInvulnerable && (
         <mesh position={[0, 2, 0]}>
-          <sphereGeometry args={[0.3, 16, 16]} />
+          <sphereGeometry args={[0.3, 8, 8]} />
           <meshBasicMaterial color="#ffaa00" transparent opacity={0.4} />
         </mesh>
       )}
@@ -158,7 +158,7 @@ function CandleMonster({
       {/* Hover glow */}
       {hovered && !isInvulnerable && (
         <mesh position={[0, 1.5, 0]}>
-          <sphereGeometry args={[1.5, 16, 16]} />
+          <sphereGeometry args={[1.5, 8, 8]} />
           <meshBasicMaterial color="#ffff00" transparent opacity={0.2} />
         </mesh>
       )}
@@ -546,7 +546,7 @@ function LibraryContent({
         
         {/* Decorative top cap */}
         <mesh position={[0, 6.2, 0]} castShadow>
-          <sphereGeometry args={[0.4, 16, 16]} />
+          <sphereGeometry args={[0.4, 8, 8]} />
           <meshStandardMaterial color="#4a3020" roughness={0.5} metalness={0.4} />
         </mesh>
         
@@ -686,7 +686,7 @@ function LibraryContent({
         
         {/* Door handle */}
         <mesh position={[0.7, 1.5, 0.3]} castShadow>
-          <sphereGeometry args={[0.08, 16, 16]} />
+          <sphereGeometry args={[0.08, 6, 6]} />
           <meshStandardMaterial color="#8a7a5a" roughness={0.4} metalness={0.6} />
         </mesh>
         
@@ -884,7 +884,7 @@ function LibraryContent({
           {/* Glow ring when hovered */}
           {mainLanternHovered && (
             <mesh position={[0, 0, 0]}>
-              <sphereGeometry args={[0.15, 16, 16]} />
+              <sphereGeometry args={[0.15, 8, 8]} />
               <meshBasicMaterial color="#ffaa44" transparent opacity={0.3} />
             </mesh>
           )}
@@ -1009,7 +1009,7 @@ function LibraryContent({
           {/* Glow ring when hovered */}
           {sideLanternHovered && (
             <mesh position={[0, 0, 0]}>
-              <sphereGeometry args={[0.12, 16, 16]} />
+              <sphereGeometry args={[0.12, 8, 8]} />
               <meshBasicMaterial color="#ffaa44" transparent opacity={0.3} />
             </mesh>
           )}
@@ -1378,7 +1378,7 @@ function LibraryContent({
           </mesh>
           {/* Skull (simplified) */}
           <mesh castShadow>
-            <sphereGeometry args={[0.15, 12, 12]} />
+            <sphereGeometry args={[0.15, 8, 8]} />
             <meshStandardMaterial color="#d0d0c0" roughness={0.9} />
           </mesh>
           {/* Eye sockets with eerie glow */}

@@ -360,10 +360,10 @@ function WallCrack({ isSealing, sealProgress, position, rotation, onPointerDown,
   );
 }
 
-// Phase 1: Crack Particles
+// Phase 1: Crack Particles (optimized)
 function CrackParticles({ active, crackPosition }: { active: boolean; crackPosition: THREE.Vector3 }) {
   const particlesRef = useRef<THREE.Points>(null);
-  const particleCount = 250;
+  const particleCount = 50; // Reduced from 250 for performance
   const velocitiesRef = useRef<Float32Array>(new Float32Array(particleCount * 3));
 
   useEffect(() => {
@@ -511,7 +511,7 @@ interface FloorHoleProps {
 function FloorHole({ position, color, isFilled }: FloorHoleProps) {
   const holeRef = useRef<THREE.Mesh>(null);
   const particlesRef = useRef<THREE.Points>(null);
-  const particleCount = 100;
+  const particleCount = 30; // Reduced from 100 for performance
 
   // Initialize static particles
   useEffect(() => {
@@ -1060,7 +1060,7 @@ function ClearedBlocksDisplay({ cleared, target }: { cleared: number; target: nu
 function ExitDoor({ onClick }: { onClick: () => void }) {
   const doorRef = useRef<THREE.Group>(null);
   const particlesRef = useRef<THREE.Points>(null);
-  const particleCount = 50;
+  const particleCount = 20; // Reduced from 50 for performance
 
   useEffect(() => {
     if (!particlesRef.current) return;
@@ -1140,10 +1140,10 @@ function ExitDoor({ onClick }: { onClick: () => void }) {
   );
 }
 
-// Ceiling particles
+// Ceiling particles (optimized)
 function CeilingParticles() {
   const particlesRef = useRef<THREE.Points>(null);
-  const particleCount = 100;
+  const particleCount = 30; // Reduced from 100 for performance
 
   useEffect(() => {
     if (!particlesRef.current) return;

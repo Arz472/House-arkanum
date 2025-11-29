@@ -29,23 +29,23 @@ class SharedResources {
   public readonly ceilingMaterial: THREE.MeshStandardMaterial;
   
   private constructor() {
-    // Create geometries once
+    // Create optimized geometries once (reduced poly counts for performance)
     this.boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-    this.sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
-    this.cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 16);
+    this.sphereGeometry = new THREE.SphereGeometry(1, 16, 16); // Reduced from 32x32
+    this.cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 12); // Reduced from 16
     this.planeGeometry = new THREE.PlaneGeometry(1, 1);
-    this.smallSphereGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+    this.smallSphereGeometry = new THREE.SphereGeometry(0.3, 8, 8); // Reduced from 16x16
     
-    // Candle-specific geometries
-    this.candleBodyGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.6, 8);
+    // Candle-specific geometries (optimized)
+    this.candleBodyGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.6, 6); // Reduced from 8
     this.candleWickGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.1, 4);
-    this.flameOrbGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+    this.flameOrbGeometry = new THREE.SphereGeometry(0.3, 8, 8); // Reduced from 16x16
     
-    // GC orb geometry
-    this.gcOrbGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+    // GC orb geometry (optimized)
+    this.gcOrbGeometry = new THREE.SphereGeometry(0.3, 8, 8); // Reduced from 16x16
     
-    // Rune geometry
-    this.runeGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 16);
+    // Rune geometry (optimized)
+    this.runeGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 12); // Reduced from 16
     
     // Create materials once
     this.stoneMaterial = new THREE.MeshStandardMaterial({ 
