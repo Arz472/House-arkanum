@@ -557,13 +557,13 @@ function LoopRoomContent({
       {lanternPositions.map((pos, i) => (
         <group key={`lantern-${i}`} position={[pos.x, pos.y, pos.z]}>
           {/* Lantern post */}
-          <mesh position={[0, 1, 0]} castShadow>
-            <cylinderGeometry args={[0.1, 0.1, 2, 8]} />
+          <mesh position={[0, 1, 0]}>
+            <cylinderGeometry args={[0.1, 0.1, 2, 6]} />
             <meshStandardMaterial color="#3a2a1a" roughness={0.7} />
           </mesh>
           
           {/* Lantern top */}
-          <mesh position={[0, 2.2, 0]} castShadow>
+          <mesh position={[0, 2.2, 0]}>
             <boxGeometry args={[0.4, 0.6, 0.4]} />
             <meshStandardMaterial 
               color="#4a3a2a" 
@@ -611,38 +611,38 @@ function LoopRoomContent({
       <primitive object={scene} scale={[20, 20, 20]} />
 
       {/* Larger enclosed space for graveyard */}
-      {/* Floor - extended */}
-      <mesh position={[0, -3, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      {/* Floor - extended (no shadows for performance) */}
+      <mesh position={[0, -3, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[60, 60]} />
         <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
       </mesh>
 
       {/* Ceiling - higher and larger */}
-      <mesh position={[0, 15, 0]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
+      <mesh position={[0, 15, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <planeGeometry args={[60, 60]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.9} />
       </mesh>
 
       {/* Back wall - taller and wider */}
-      <mesh position={[0, 6, -30]} receiveShadow>
+      <mesh position={[0, 6, -30]}>
         <planeGeometry args={[60, 18]} />
         <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
       </mesh>
 
       {/* Front wall */}
-      <mesh position={[0, 6, 30]} rotation={[0, Math.PI, 0]} receiveShadow>
+      <mesh position={[0, 6, 30]} rotation={[0, Math.PI, 0]}>
         <planeGeometry args={[60, 18]} />
         <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
       </mesh>
 
       {/* Left wall */}
-      <mesh position={[-30, 6, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+      <mesh position={[-30, 6, 0]} rotation={[0, Math.PI / 2, 0]}>
         <planeGeometry args={[60, 18]} />
         <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
       </mesh>
 
       {/* Right wall */}
-      <mesh position={[30, 6, 0]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+      <mesh position={[30, 6, 0]} rotation={[0, -Math.PI / 2, 0]}>
         <planeGeometry args={[60, 18]} />
         <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
       </mesh>

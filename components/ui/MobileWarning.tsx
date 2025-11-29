@@ -26,24 +26,19 @@ export default function MobileWarning() {
   const handleStartPlaying = async () => {
     setIsRequesting(true);
     
-    console.log('🎮 Mobile: Requesting gyroscope permission...');
-    
     // Request gyroscope permission
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       try {
         const permission = await (DeviceOrientationEvent as any).requestPermission();
-        console.log('✅ Gyroscope permission:', permission);
         
         if (permission === 'granted') {
-          // Dispatch custom event to notify TouchControls
           window.dispatchEvent(new CustomEvent('gyroPermissionGranted'));
         }
       } catch (error) {
-        console.error('❌ Error requesting gyroscope permission:', error);
+        // Permission denied or error
       }
     } else {
-      console.log('✅ Gyroscope: No permission needed (Android/older iOS)');
-      // Dispatch event for non-iOS devices
+      // No permission needed (Android/older iOS)
       window.dispatchEvent(new CustomEvent('gyroPermissionGranted'));
     }
     

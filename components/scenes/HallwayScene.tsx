@@ -587,7 +587,6 @@ function WallTorch({ position }: { position: [number, number, number] }) {
         color="#ff5500" 
         intensity={1.2} 
         distance={5}
-        castShadow
       />
       
       {/* Smoke particles rising */}
@@ -1396,13 +1395,7 @@ function HallwayContent({
       <WallTorch position={[-4.8, 2, -20]} />
       <WallTorch position={[4.8, 2, -23]} />
       
-      {/* Spotlights on doors to guide players */}
-      <spotLight position={[2, 3, -5]} angle={0.4} penumbra={0.5} intensity={0.3} target-position={[4, 1, -5]} color="#ff6b6b" />
-      <spotLight position={[-2, 3, -8]} angle={0.4} penumbra={0.5} intensity={0.3} target-position={[-4, 1, -8]} color="#ffd93d" />
-      <spotLight position={[2, 3, -11]} angle={0.4} penumbra={0.5} intensity={0.3} target-position={[4, 1, -11]} color="#6bcf7f" />
-      <spotLight position={[-2, 3, -14]} angle={0.4} penumbra={0.5} intensity={0.3} target-position={[-4, 1, -14]} color="#4d96ff" />
-      <spotLight position={[2, 3, -17]} angle={0.4} penumbra={0.5} intensity={0.3} target-position={[4, 1, -17]} color="#c77dff" />
-      <spotLight position={[0, 4, -18]} angle={0.5} penumbra={0.4} intensity={0.5} target-position={[0, 1, -21]} color="#ffd700" />
+      {/* Removed spotlights for performance - doors have their own lights */}
       
       {/* Cobwebs in corners - reduced amount */}
       <Cobweb position={[-4.7, 3.8, -3]} rotation={[0, Math.PI / 4, Math.PI / 6]} scale={1.2} />
@@ -1428,7 +1421,7 @@ function HallwayContent({
       <GhostOrb position={[3, 2.5, -20]} color="#c77dff" />
       
       {/* Floor - with subtle path lighting */}
-      <mesh position={[0, -2, -10]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <mesh position={[0, -2, -10]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[10, 30]} />
         <meshStandardMaterial 
           color="#1a1a28" 
@@ -1479,7 +1472,7 @@ function HallwayContent({
       </mesh>
       
       {/* Left wall - dark stone */}
-      <mesh position={[-5, 1, -10]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+      <mesh position={[-5, 1, -10]} rotation={[0, Math.PI / 2, 0]}>
         <planeGeometry args={[30, 6]} />
         <meshStandardMaterial 
           color="#1a1a28" 
@@ -1488,7 +1481,7 @@ function HallwayContent({
       </mesh>
       
       {/* Right wall - dark stone */}
-      <mesh position={[5, 1, -10]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+      <mesh position={[5, 1, -10]} rotation={[0, -Math.PI / 2, 0]}>
         <planeGeometry args={[30, 6]} />
         <meshStandardMaterial 
           color="#1a1a28" 

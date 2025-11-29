@@ -36,12 +36,9 @@ export default function TouchControls() {
   // Listen for permission granted event from MobileWarning
   useEffect(() => {
     const handlePermissionGranted = () => {
-      console.log('📱 TouchControls: Permission granted, activating gyroscope...');
       if (!gyroRequested) {
         setGyroRequested(true);
-        requestPermission().then(success => {
-          console.log('📱 Gyroscope activation:', success ? 'SUCCESS' : 'FAILED');
-        });
+        requestPermission();
       }
     };
 
@@ -71,7 +68,7 @@ export default function TouchControls() {
         lastBeta = beta;
         lastGamma = gamma;
         initialized = true;
-        console.log('📱 Gyro initialized:', { alpha, beta, gamma });
+        // Gyro initialized
         return;
       }
 
@@ -102,36 +99,18 @@ export default function TouchControls() {
       lastBeta = beta;
       lastGamma = gamma;
 
-      // Debug log
-      if (Math.floor(Date.now() / 1000) % 2 === 0) {
-        console.log('📱 Gyro:', { 
-          alpha: alpha.toFixed(1), 
-          beta: beta.toFixed(1),
-          gamma: gamma.toFixed(1),
-          deltaGamma: deltaGamma.toFixed(2),
-          deltaBeta: deltaBeta.toFixed(2),
-          camY: cameraRotationY.toFixed(3),
-          camX: cameraRotationX.toFixed(3)
-        });
-      }
+      // Debug logs removed for performance
     };
 
     window.addEventListener('deviceorientation', handleOrientation);
-    console.log('📱 Listening for device orientation events...');
+    // Listening for device orientation events
 
     return () => {
       window.removeEventListener('deviceorientation', handleOrientation);
     };
   }, [isMobile, isGyroActive, gyroRotationRef]);
 
-  // Debug: Log when gyro becomes active
-  useEffect(() => {
-    if (isGyroActive) {
-      console.log('✅ Gyroscope is now ACTIVE');
-    } else {
-      console.log('⏸️ Gyroscope is INACTIVE');
-    }
-  }, [isGyroActive]);
+  // Gyroscope state tracking (logs removed for performance)
 
   if (!isMobile) return null;
 
