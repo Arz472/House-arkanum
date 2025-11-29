@@ -33,11 +33,23 @@ export default function TouchControls() {
     return () => window.removeEventListener('resize', checkMobile);
   }, [setIsMobile]);
 
-  // Auto-request gyroscope permission on mobile
+  // Auto-activate gyroscope listener after permission granted
   useEffect(() => {
     if (isMobile && isGyroSupported && !gyroRequested) {
-      setGyroRequested(true);
-      requestPermission();
+      // Check if permission already granted (non-iOS or already approved)
+      const checkAndActivate = () => {
+        if (typeof DeviceOrientationEvent !== 'undefined') {
+          // For non-iOS devices, just start listening
+          if (typeof (DeviceOrientationEvent as any).requestPermission !== 'function') {
+            setGyroRequested(true);
+            requestPermission();
+          }
+        }
+      };
+      
+      // Delay to let MobileWarning show first
+      const timer = setTimeout(checkAndActivate, 500);
+      return () => clearTimeout(timer);
     }
   }, [isMobile, isGyroSupported, gyroRequested, requestPermission]);
 
@@ -79,29 +91,10 @@ export default function TouchControls() {
 
   return (
     <>
-      {/* Interact Button */}
-      <button
-        onClick={() => {
-          // Simulate click at center of screen
-          const event = new MouseEvent('click', {
-            view: window,
-            bubbles: true,
-            cancelable: true,
-            clientX: window.innerWidth / 2,
-            clientY: window.innerHeight / 2
-          });
-          document.dispatchEvent(event);
-        }}
-        className="fixed bottom-4 right-4 w-14 h-14 rounded-full bg-red-600 bg-opacity-90 border-2 border-red-400 flex items-center justify-center text-white font-bold text-2xl shadow-lg active:scale-90 transition-transform"
-        style={{ zIndex: 100 }}
-      >
-        ⚡
-      </button>
-
       {/* Gyro Status Indicator */}
       {isGyroActive && (
-        <div className="fixed top-4 right-4 bg-green-600 bg-opacity-90 px-3 py-2 rounded text-xs text-white font-mono border-2 border-green-400" style={{ zIndex: 100 }}>
-          📱 Gyro Active
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-green-600 bg-opacity-90 px-3 py-2 rounded text-xs text-white font-mono border-2 border-green-400" style={{ zIndex: 100 }}>
+          📱 Gyro Active - Move your phone to look around
         </div>
       )}
     </>

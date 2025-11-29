@@ -6,6 +6,7 @@ import Button from './Button';
 export default function MobileWarning() {
   const [isMobile, setIsMobile] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
 
   useEffect(() => {
     // Check if user is on mobile
@@ -21,6 +22,23 @@ export default function MobileWarning() {
     
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  const handleStartPlaying = async () => {
+    setIsRequesting(true);
+    
+    // Request gyroscope permission
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+      try {
+        const permission = await (DeviceOrientationEvent as any).requestPermission();
+        console.log('Gyroscope permission:', permission);
+      } catch (error) {
+        console.error('Error requesting gyroscope permission:', error);
+      }
+    }
+    
+    setIsRequesting(false);
+    setDismissed(true);
+  };
 
   if (!isMobile || dismissed) return null;
 
@@ -43,22 +61,22 @@ export default function MobileWarning() {
             </p>
           </div>
           <div className="flex items-start gap-2 text-xs">
-            <span className="text-lg">⚡</span>
+            <span className="text-lg">👆</span>
             <p className="text-gray-300 font-mono flex-1">
-              <span className="text-red-400 font-bold">Tap button</span> to interact with doors
+              <span className="text-cyan-400 font-bold">Tap doors</span> to enter rooms
             </p>
           </div>
         </div>
         
         <div className="bg-green-900 bg-opacity-20 p-2 rounded border border-green-700 mb-4">
           <p className="font-mono text-xs text-green-300 text-center">
-            🎮 Gyroscope controls will activate automatically
+            🎮 You'll be asked for gyroscope permission
           </p>
         </div>
         
         <Button 
-          label="Start Playing" 
-          onClick={() => setDismissed(true)}
+          label={isRequesting ? "Requesting..." : "Start Playing"} 
+          onClick={handleStartPlaying}
           variant="primary"
         />
         
