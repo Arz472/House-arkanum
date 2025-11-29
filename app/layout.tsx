@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { MobileControlsProvider } from '@/lib/MobileControlsContext';
 
 export const metadata: Metadata = {
   title: 'House Arkanum: Haunted Codebase',
@@ -21,7 +22,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <MobileControlsProvider>
+          {children}
+        </MobileControlsProvider>
+      </body>
     </html>
   );
 }

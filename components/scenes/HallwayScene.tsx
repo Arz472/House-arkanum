@@ -6,6 +6,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import Scene3D from '@/components/Scene3D';
 import { RoomId, useGameState } from '@/store/gameState';
+import { useMobileControls } from '@/lib/MobileControlsContext';
 import * as THREE from 'three';
 
 interface DoorConfig {
@@ -367,6 +368,7 @@ interface CameraControllerProps {
 
 function CameraController({ isWalking, isWalkingBack, isWalkingToAltar, targetPosition, targetDoorPosition, onWalkComplete, onWalkBackComplete }: CameraControllerProps) {
   const { camera } = useThree();
+  const { isMobile, gyroEnabled, gyroRotation, touchLookDelta } = useMobileControls();
   const mousePos = useRef({ x: 0, y: 0 });
   const targetRotation = useRef({ x: 0, y: 0 });
   const walkProgress = useRef(0);
@@ -374,8 +376,10 @@ function CameraController({ isWalking, isWalkingBack, isWalkingToAltar, targetPo
   const initialRotation = useRef<THREE.Euler | null>(null);
   const STARTING_POSITION: [number, number, number] = [0, 1, 3];
   
-  // Track mouse position
+  // Track mouse position (desktop only)
   useState(() => {
+    if (isMobile) return;
+    
     const handleMouseMove = (event: MouseEvent) => {
       // Normalize mouse position to -1 to 1 range
       mousePos.current.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -487,14 +491,30 @@ function CameraController({ isWalking, isWalkingBack, isWalkingToAltar, targetPo
       }
     } else {
       // Normal parallax behavior when not walking
-      // Calculate target rotation based on mouse position
-      // Negate x to fix left/right inversion - mouse right = camera right
-      targetRotation.current.y = -mousePos.current.x * 0.1;
-      targetRotation.current.x = mousePos.current.y * 0.05;
-      
-      // Smoothly interpolate camera rotation
-      camera.rotation.y += (targetRotation.current.y - camera.rotation.y) * 0.05;
-      camera.rotation.x += (targetRotation.current.x - camera.rotation.x) * 0.05;
+      if (isMobile && gyroEnabled) {
+        // Use gyroscope rotation (already calculated to match mouse parallax)
+        camera.rotation.y = gyroRotation.y;
+        camera.rotation.x = gyroRotation.x;
+      } else if (isMobile && touchLookDelta.x !== 0 && touchLookDelta.y !== 0) {
+        // Use touch look delta
+        targetRotation.current.y -= touchLookDelta.x;
+        targetRotation.current.x -= touchLookDelta.y;
+        
+        // Clamp vertical rotation
+        targetRotation.current.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, targetRotation.current.x));
+        
+        camera.rotation.y = targetRotation.current.y;
+        camera.rotation.x = targetRotation.current.x;
+      } else {
+        // Desktop: Calculate target rotation based on mouse position
+        // Negate x to fix left/right inversion - mouse right = camera right
+        targetRotation.current.y = -mousePos.current.x * 0.1;
+        targetRotation.current.x = mousePos.current.y * 0.05;
+        
+        // Smoothly interpolate camera rotation
+        camera.rotation.y += (targetRotation.current.y - camera.rotation.y) * 0.05;
+        camera.rotation.x += (targetRotation.current.x - camera.rotation.x) * 0.05;
+      }
     }
   });
   

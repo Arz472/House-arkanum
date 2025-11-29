@@ -1,19 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
 import { useDeviceOrientation } from '@/lib/useDeviceOrientation';
+import { useMobileControls } from '@/lib/MobileControlsContext';
 
-interface TouchControlsProps {
-  onMove?: (direction: { x: number; z: number }) => void;
-  onLook?: (delta: { x: number; y: number }) => void;
-  onGyroLook?: (orientation: { alpha: number; beta: number; gamma: number }) => void;
-  onInteract?: () => void;
-}
-
-export default function TouchControls({ onMove, onLook, onGyroLook, onInteract }: TouchControlsProps) {
-  const [isMobile, setIsMobile] = useState(false);
-  const [gyroEnabled, setGyroEnabled] = useState(false);
+export default function TouchControls() {
   const joystickRef = useRef<HTMLDivElement>(null);
   const knobRef = useRef<HTMLDivElement>(null);
   const lookTouchId = useRef<number | null>(null);
@@ -21,14 +12,25 @@ export default function TouchControls({ onMove, onLook, onGyroLook, onInteract }
   const lastLookPos = useRef({ x: 0, y: 0 });
   
   const {
+    isMobile,
+    setIsMobile,
+    gyroEnabled,
+    setGyroEnabled,
+    setGyroRotation,
+    setTouchLookDelta
+  } = useMobileControls();
+  
+  const {
     isSupported: isGyroSupported,
     permission: gyroPermission,
     isActive: isGyroActive,
-    relativeOrientation,
+    orientation,
     requestPermission,
     resetOrientation,
     setIsActive
   } = useDeviceOrientation();
+
+  const initialOrientation = useRef<{ alpha: number; beta: number; gamma: number } | null>(null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -41,18 +43,39 @@ export default function TouchControls({ onMove, onLook, onGyroLook, onInteract }
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [setIsMobile]);
 
-  // Send gyroscope data when active (mobile only)
+  // Convert gyroscope data to camera rotation (like mouse parallax)
   useEffect(() => {
     if (!isMobile || !isGyroActive || !gyroEnabled) return;
 
+    // Store initial orientation on first activation
+    if (!initialOrientation.current) {
+      initialOrientation.current = { ...orientation };
+    }
+
     const interval = setInterval(() => {
-      onGyroLook?.(relativeOrientation);
+      if (!initialOrientation.current) return;
+
+      // Calculate relative rotation from initial position
+      const deltaGamma = orientation.gamma - initialOrientation.current.gamma;
+      const deltaBeta = orientation.beta - initialOrientation.current.beta;
+
+      // Convert to normalized values similar to mouse position (-1 to 1)
+      // Gamma: left-right tilt (-90 to 90) -> normalize to -1 to 1
+      // Beta: front-back tilt (-180 to 180) -> normalize to -1 to 1
+      const normalizedX = Math.max(-1, Math.min(1, deltaGamma / 45)); // 45 degrees = full range
+      const normalizedY = Math.max(-1, Math.min(1, -deltaBeta / 45)); // Inverted for natural feel
+
+      // Apply same scaling as mouse parallax (0.1 for Y, 0.05 for X)
+      const rotationY = -normalizedX * 0.1;
+      const rotationX = normalizedY * 0.05;
+
+      setGyroRotation({ x: rotationX, y: rotationY });
     }, 16); // ~60fps
 
     return () => clearInterval(interval);
-  }, [isMobile, isGyroActive, gyroEnabled, relativeOrientation, onGyroLook]);
+  }, [isMobile, isGyroActive, gyroEnabled, orientation, setGyroRotation]);
 
   const handleGyroToggle = async () => {
     if (!isMobile) return;
@@ -61,11 +84,14 @@ export default function TouchControls({ onMove, onLook, onGyroLook, onInteract }
       const granted = await requestPermission();
       if (granted) {
         setGyroEnabled(true);
+        initialOrientation.current = null; // Reset on enable
         resetOrientation();
       }
     } else {
       setGyroEnabled(false);
       setIsActive(false);
+      initialOrientation.current = null;
+      setGyroRotation({ x: 0, y: 0 });
     }
   };
 
@@ -118,19 +144,17 @@ export default function TouchControls({ onMove, onLook, onGyroLook, onInteract }
           
           knobRef.current.style.transform = `translate(${knobX}px, ${knobY}px)`;
           
-          // Normalize movement
-          const normalizedX = (Math.cos(angle) * clampedDistance) / maxDistance;
-          const normalizedZ = (Math.sin(angle) * clampedDistance) / maxDistance;
-          
-          onMove?.({ x: normalizedX, z: normalizedZ });
+          // Normalize movement (handled by individual scenes if needed)
+          // const normalizedX = (Math.cos(angle) * clampedDistance) / maxDistance;
+          // const normalizedZ = (Math.sin(angle) * clampedDistance) / maxDistance;
         }
         
-        // Look control
-        if (touch.identifier === lookTouchId.current) {
+        // Look control (only if gyro disabled)
+        if (touch.identifier === lookTouchId.current && !gyroEnabled) {
           const deltaX = touch.clientX - lastLookPos.current.x;
           const deltaY = touch.clientY - lastLookPos.current.y;
           
-          onLook?.({ x: deltaX * 0.003, y: deltaY * 0.003 });
+          setTouchLookDelta({ x: deltaX * 0.003, y: deltaY * 0.003 });
           
           lastLookPos.current = { x: touch.clientX, y: touch.clientY };
         }
@@ -147,11 +171,12 @@ export default function TouchControls({ onMove, onLook, onGyroLook, onInteract }
           if (knobRef.current) {
             knobRef.current.style.transform = 'translate(0, 0)';
           }
-          onMove?.({ x: 0, z: 0 });
+          // Movement reset handled by individual scenes
         }
         
         if (touch.identifier === lookTouchId.current) {
           lookTouchId.current = null;
+          setTouchLookDelta({ x: 0, y: 0 });
         }
       });
     };
@@ -165,7 +190,7 @@ export default function TouchControls({ onMove, onLook, onGyroLook, onInteract }
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isMobile, gyroEnabled, onMove, onLook]);
+  }, [isMobile, gyroEnabled, setTouchLookDelta]);
 
   if (!isMobile) return null;
 
@@ -209,7 +234,17 @@ export default function TouchControls({ onMove, onLook, onGyroLook, onInteract }
 
       {/* Interact Button */}
       <button
-        onClick={onInteract}
+        onClick={() => {
+          // Simulate click at center of screen
+          const event = new MouseEvent('click', {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            clientX: window.innerWidth / 2,
+            clientY: window.innerHeight / 2
+          });
+          document.dispatchEvent(event);
+        }}
         className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-red-600 bg-opacity-80 border-4 border-red-400 flex items-center justify-center text-white font-bold text-xl shadow-lg active:scale-95 transition-transform"
         style={{ zIndex: 100 }}
       >
