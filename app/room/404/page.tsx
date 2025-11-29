@@ -933,7 +933,7 @@ export default function Door404RoomPage() {
   const sceneNames = ['Graduation', 'Soccer', 'School', 'Hospital'];
   
   // Track mouse position
-  useState(() => {
+  useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       mousePos.current.x = (event.clientX / window.innerWidth) * 2 - 1;
       mousePos.current.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -941,7 +941,7 @@ export default function Door404RoomPage() {
     
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  });
+  }, []);
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
