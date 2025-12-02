@@ -679,6 +679,9 @@ function MirrorRoomContent({
   );
 }
 
+import PauseMenu from '@/components/ui/PauseMenu';
+import { usePauseMenu } from '@/lib/usePauseMenu';
+
 export default function MirrorRoomScene() {
   const [phase, setPhase] = useState<GamePhase>('find_leg');
   const [heldPart, setHeldPart] = useState<BodyPart | null>(null);
@@ -688,6 +691,7 @@ export default function MirrorRoomScene() {
   const [isNearPart, setIsNearPart] = useState(false);
   const router = useRouter();
   const bgAudioRef = useRef<HTMLAudioElement | null>(null);
+  const { isPaused, closePause } = usePauseMenu();
 
   // Background music
   useEffect(() => {
@@ -711,6 +715,9 @@ export default function MirrorRoomScene() {
 
   return (
     <div className="w-full h-screen relative">
+      {/* Pause Menu */}
+      <PauseMenu isOpen={isPaused} onClose={closePause} roomName="Mirror Room" />
+      
       <Scene3D cameraPosition={[0, 1.6, 8]} cameraFov={75}>
         <color attach="background" args={['#111111']} />
         <MirrorRoomContent 

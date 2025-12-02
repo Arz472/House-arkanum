@@ -7,8 +7,10 @@ import { useGLTF } from '@react-three/drei';
 import Scene3D from '@/components/Scene3D';
 import Overlay from '@/components/ui/Overlay';
 import Button from '@/components/ui/Button';
+import PauseMenu from '@/components/ui/PauseMenu';
 import { useGameState } from '@/store/gameState';
 import { useMobileControls } from '@/lib/MobileControlsContext';
+import { usePauseMenu } from '@/lib/usePauseMenu';
 import * as THREE from 'three';
 
 
@@ -658,6 +660,7 @@ export default function LoopRoomScene() {
   const [correctHits, setCorrectHits] = useState(0);
   const [wrongHits, setWrongHits] = useState(0);
   const router = useRouter();
+  const { isPaused, closePause } = usePauseMenu();
   
   const handleCorrectHit = () => {
     const newCorrect = correctHits + 1;
@@ -693,6 +696,9 @@ export default function LoopRoomScene() {
 
   return (
     <div className="w-full h-screen relative">
+      {/* Pause Menu */}
+      <PauseMenu isOpen={isPaused} onClose={closePause} roomName="Loop Room" />
+      
       {/* Camera glitch overlay */}
       {glitchIntensity > 0 && (
         <div 

@@ -1423,6 +1423,9 @@ function LibraryContent({
   );
 }
 
+import PauseMenu from '@/components/ui/PauseMenu';
+import { usePauseMenu } from '@/lib/usePauseMenu';
+
 export default function NullCandlesRoomScene() {
   const [showIntro, setShowIntro] = useState(true);
   const [showRiddle, setShowRiddle] = useState(false);
@@ -1439,6 +1442,7 @@ export default function NullCandlesRoomScene() {
   const flameOrbPosition: [number, number, number] = [0, 0.62, -8]; // Center of table at [0, 0, -8]
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
+  const { isPaused, closePause } = usePauseMenu();
   
   // Handle monster animation complete
   const handleMonsterAnimationComplete = () => {
@@ -1542,6 +1546,9 @@ export default function NullCandlesRoomScene() {
 
   return (
     <div className="w-full h-screen relative">
+      {/* Pause Menu */}
+      <PauseMenu isOpen={isPaused} onClose={closePause} roomName="Null Candles Room" />
+      
       <Scene3D cameraPosition={[0, 1.5, 2]} cameraFov={75}>
         <color attach="background" args={['#1a1210']} />
         <LibraryContent 
@@ -1697,7 +1704,7 @@ export default function NullCandlesRoomScene() {
       {showIntro && (
         <Overlay title="The Ancient Library">
           <p className="text-center mb-4">
-            A vast three-floor library stretches before you, filled with forgotten knowledge.
+            A vast two-floor library stretches before you, filled with forgotten knowledge.
           </p>
           <p className="text-center text-sm text-gray-400 mb-6">
             Move your mouse to look around the library. Click on the glowing staircases to travel between floors.
@@ -1714,7 +1721,7 @@ export default function NullCandlesRoomScene() {
         <div className="absolute bottom-4 left-4 text-white text-sm font-mono bg-black bg-opacity-70 p-3 rounded max-w-md">
           <div className="mb-1">🖱️ <strong>Move mouse</strong> to look around the library</div>
           <div className="mb-1">🌀 <strong>Approach glowing staircases</strong> to travel between floors</div>
-          <div>📚 Explore all three floors of the ancient library</div>
+          <div>📚 Explore both floors of the ancient library</div>
         </div>
       )}
       

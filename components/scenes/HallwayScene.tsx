@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
@@ -40,6 +40,7 @@ interface AltarDoorProps {
 function Door({ config, onClick, isFixed }: DoorProps) {
   const [hovered, setHovered] = useState(false);
   const { scene } = useGLTF('/KIRO_ASSETS/hallway/loopdoor.glb');
+  const doorMaterialsRef = useRef<THREE.MeshStandardMaterial[]>([]);
   
   const scale = hovered ? 1.1 : 1;
   
@@ -48,10 +49,10 @@ function Door({ config, onClick, isFixed }: DoorProps) {
     ? [0, -Math.PI / 2, 0]  // Right wall - face left
     : [0, Math.PI / 2, 0];   // Left wall - face right
   
-  // Clone the scene to allow different materials per door
-  const doorScene = scene.clone();
+  // Clone the scene ONCE using useMemo
+  const doorScene = useMemo(() => scene.clone(), [scene]);
   
-  // Apply unique texture/material to each door
+  // Apply unique texture/material to each door ONCE on mount
   useEffect(() => {
     doorScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
@@ -60,55 +61,72 @@ function Door({ config, onClick, isFixed }: DoorProps) {
         // Customize material based on door type
         switch (config.id) {
           case 'loop':
-            // Swirling, hypnotic pattern
             material.color = new THREE.Color(config.color);
             material.emissive = new THREE.Color(config.color);
-            material.emissiveIntensity = hovered ? 0.4 : 0.2;
+            material.emissiveIntensity = 0.2;
             material.metalness = 0.3;
             material.roughness = 0.7;
             break;
             
           case 'nullCandles':
-            // Flickering, unstable appearance
             material.color = new THREE.Color(config.color);
             material.emissive = new THREE.Color('#ffaa00');
-            material.emissiveIntensity = hovered ? 0.5 : 0.3;
+            material.emissiveIntensity = 0.3;
             material.metalness = 0.1;
             material.roughness = 0.9;
             break;
             
           case 'door404':
-            // Glitchy, corrupted texture
             material.color = new THREE.Color(config.color);
             material.emissive = new THREE.Color(config.color);
-            material.emissiveIntensity = hovered ? 0.6 : 0.3;
+            material.emissiveIntensity = 0.3;
             material.metalness = 0.8;
             material.roughness = 0.4;
             break;
             
           case 'leak':
-            // Wet, dripping appearance
             material.color = new THREE.Color(config.color);
             material.emissive = new THREE.Color('#2266ff');
-            material.emissiveIntensity = hovered ? 0.5 : 0.25;
+            material.emissiveIntensity = 0.25;
             material.metalness = 0.9;
             material.roughness = 0.2;
             break;
             
           case 'mirror':
-            // Reflective, shimmering surface
             material.color = new THREE.Color(config.color);
             material.emissive = new THREE.Color(config.color);
-            material.emissiveIntensity = hovered ? 0.7 : 0.4;
+            material.emissiveIntensity = 0.4;
             material.metalness = 1.0;
             material.roughness = 0.1;
             break;
         }
         
         child.material = material;
+        doorMaterialsRef.current.push(material);
       }
     });
-  }, [doorScene, config.id, config.color, hovered]);
+    
+    return () => {
+      // Cleanup materials on unmount
+      doorMaterialsRef.current.forEach(mat => mat.dispose());
+    };
+  }, [doorScene, config.id, config.color]);
+  
+  // Update emissive intensity on hover without re-cloning
+  useEffect(() => {
+    const baseIntensity = config.id === 'loop' ? 0.2 : 
+                          config.id === 'nullCandles' ? 0.3 :
+                          config.id === 'door404' ? 0.3 :
+                          config.id === 'leak' ? 0.25 : 0.4;
+    const hoverIntensity = config.id === 'loop' ? 0.4 : 
+                           config.id === 'nullCandles' ? 0.5 :
+                           config.id === 'door404' ? 0.6 :
+                           config.id === 'leak' ? 0.5 : 0.7;
+    
+    doorMaterialsRef.current.forEach(mat => {
+      mat.emissiveIntensity = hovered ? hoverIntensity : baseIntensity;
+    });
+  }, [hovered, config.id]);
   
   // Add unique decorative elements per door
   const getDoorDecoration = () => {

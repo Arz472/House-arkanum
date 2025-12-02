@@ -7,7 +7,9 @@ import { useFrame } from '@react-three/fiber';
 import { Cylinder, Box, Torus, Sphere, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import Button from '@/components/ui/Button';
+import PauseMenu from '@/components/ui/PauseMenu';
 import { useGameState } from '@/store/gameState';
+import { usePauseMenu } from '@/lib/usePauseMenu';
 
 // Phase types
 type Phase = 'intro' | 'phase1_seal' | 'phase2_drag' | 'phase3_simon' | 'phase4_rotate' | 'phase5_ram' | 'complete';
@@ -41,7 +43,7 @@ const PHASE_MESSAGES: Record<Phase, { title: string; instruction: string }> = {
   }
 };
 
-// Memory Usage HUD Component
+// Memory Usage HUD Component (Optimized with smooth CSS transitions)
 function MemoryUsageHUD({ usage }: { usage: number }) {
   const getColor = (usage: number) => {
     if (usage < 40) return '#00ff88';
@@ -51,12 +53,12 @@ function MemoryUsageHUD({ usage }: { usage: number }) {
 
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 w-96 z-10">
-      <div className="font-mono text-sm mb-1" style={{ color: getColor(usage) }}>
+      <div className="font-mono text-sm mb-1 transition-colors duration-300" style={{ color: getColor(usage) }}>
         MEMORY USAGE: {usage.toFixed(0).padStart(2, '0')}%
       </div>
       <div className="w-full h-2 bg-gray-800 border border-gray-600">
         <div
-          className="h-full transition-all duration-300"
+          className="h-full transition-all duration-150 ease-linear"
           style={{
             width: `${usage}%`,
             backgroundColor: getColor(usage)
@@ -577,7 +579,7 @@ function FloorHole({ position, color, isFilled }: FloorHoleProps) {
   );
 }
 
-// Phase 2: Draggable Component
+// Phase 2: Draggable Component (Optimized - no per-frame state updates)
 interface DraggableComponentProps {
   id: string;
   position: THREE.Vector3;
@@ -585,12 +587,20 @@ interface DraggableComponentProps {
   isLocked: boolean;
   isDragging: boolean;
   onPointerDown: (id: string) => void;
+  onMeshReady: (id: string, mesh: THREE.Mesh) => void;
 }
 
-function DraggableComponent({ id, position, color, isLocked, isDragging, onPointerDown }: DraggableComponentProps) {
+function DraggableComponent({ id, position, color, isLocked, isDragging, onPointerDown, onMeshReady }: DraggableComponentProps) {
   const meshRef = useRef<THREE.Mesh>(null);
+  
+  // Register mesh ref with parent on mount
+  useEffect(() => {
+    if (meshRef.current) {
+      onMeshReady(id, meshRef.current);
+    }
+  }, [id, onMeshReady]);
 
-  // Pulse animation when not locked
+  // Pulse animation when not locked (no state updates!)
   useFrame((state) => {
     if (meshRef.current && !isLocked) {
       const pulse = Math.sin(state.clock.elapsedTime * 3 + id.charCodeAt(0)) * 0.05 + 0.95;
@@ -1260,6 +1270,10 @@ function MemoryLeakRoomContent({ currentPhase, onPhaseComplete, onMemoryChange, 
   const planeRef = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.3));
   const raycaster = useRef(new THREE.Raycaster());
   const mouse = useRef(new THREE.Vector2());
+  
+  // Phase 2 optimization: Store mesh refs to update positions imperatively
+  const componentMeshRefs = useRef<Map<string, THREE.Mesh>>(new Map());
+  const tempVec = useRef(new THREE.Vector3());
 
   // Phase 3 state
   const secondaryCorePosition = new THREE.Vector3(0, 7.5, 0);
@@ -1495,29 +1509,37 @@ function MemoryLeakRoomContent({ currentPhase, onPhaseComplete, onMemoryChange, 
     }
   }, [components, currentPhase, phase2Complete, onPhaseComplete]);
 
-  // Phase 2: Drift components randomly
+  // Phase 2: Drift components randomly (OPTIMIZED - no state updates!)
   useFrame((state, delta) => {
     if (currentPhase === 'phase2_drag' && !phase2Complete) {
-      setComponents(prev => prev.map(c => {
-        if (c.isLocked || c.isDragging) return c;
+      components.forEach(c => {
+        if (c.isLocked || c.isDragging) return;
+        
+        const mesh = componentMeshRefs.current.get(c.id);
+        if (!mesh) return;
         
         // Random drift direction
         const driftAngle = state.clock.elapsedTime * 0.5 + c.id.charCodeAt(0);
         const driftX = Math.sin(driftAngle) * delta * 0.3;
         const driftZ = Math.cos(driftAngle) * delta * 0.3;
         
-        const newPos = c.position.clone().add(new THREE.Vector3(driftX, 0, driftZ));
+        // Update mesh position directly (no state update!)
+        mesh.position.x += driftX;
+        mesh.position.z += driftZ;
         
         // Keep within bounds (radius 6)
-        const distFromCenter = Math.sqrt(newPos.x * newPos.x + newPos.z * newPos.z);
-        if (distFromCenter < 6) {
-          return { ...c, position: newPos };
-        } else {
+        const distFromCenter = Math.sqrt(mesh.position.x * mesh.position.x + mesh.position.z * mesh.position.z);
+        if (distFromCenter >= 6) {
           // Bounce back toward center
-          const bounceDir = newPos.clone().normalize().multiplyScalar(-1);
-          return { ...c, position: c.position.clone().add(bounceDir.multiplyScalar(delta * 0.5)) };
+          tempVec.current.set(mesh.position.x, 0, mesh.position.z);
+          tempVec.current.normalize().multiplyScalar(-delta * 0.5);
+          mesh.position.x += tempVec.current.x;
+          mesh.position.z += tempVec.current.z;
         }
-      }));
+        
+        // Update state position for drag/lock logic (only when needed)
+        c.position.copy(mesh.position);
+      });
     }
   });
 
@@ -1832,13 +1854,23 @@ function MemoryLeakRoomContent({ currentPhase, onPhaseComplete, onMemoryChange, 
     }
   });
 
-  // Phase 5: Memory increase logic
+  // Phase 5: Memory increase logic (OPTIMIZED - throttled HUD updates)
+  const memoryAccumulator = useRef(0);
+  const lastHUDUpdate = useRef(0);
+  
   useFrame((state, delta) => {
     if (currentPhase === 'phase5_ram' && !phase5Complete && !isCoreCalm) {
-      // Increase memory based on rate
-      onMemoryChange(memoryIncreaseRate * delta);
+      // Accumulate memory increase
+      memoryAccumulator.current += memoryIncreaseRate * delta;
       
-      // Update pulse intensity based on memory
+      // Update HUD only 10 times per second (instead of 60)
+      if (state.clock.elapsedTime - lastHUDUpdate.current >= 0.1) {
+        onMemoryChange(memoryAccumulator.current);
+        memoryAccumulator.current = 0;
+        lastHUDUpdate.current = state.clock.elapsedTime;
+      }
+      
+      // Update pulse intensity based on memory (visual feedback stays smooth)
       const memoryPercent = memoryUsage / 100;
       setCorePulseIntensity(0.5 + memoryPercent * 1.5);
     }
@@ -2017,6 +2049,7 @@ function MemoryLeakRoomContent({ currentPhase, onPhaseComplete, onMemoryChange, 
                 isLocked={comp.isLocked}
                 isDragging={comp.isDragging}
                 onPointerDown={handleComponentPointerDown}
+                onMeshReady={(id, mesh) => componentMeshRefs.current.set(id, mesh)}
               />
             ))}
           </group>
@@ -2163,6 +2196,7 @@ export default function MemoryLeakRoomScene() {
   const [showGreenFlash, setShowGreenFlash] = useState(false);
   const [showFailure, setShowFailure] = useState(false);
   const markRoomFixed = useGameState((state) => state.markRoomFixed);
+  const { isPaused, closePause } = usePauseMenu();
   
   // Audio refs
   const bgMusicRef = useRef<HTMLAudioElement | null>(null);
@@ -2330,6 +2364,9 @@ export default function MemoryLeakRoomScene() {
 
   return (
     <div className="relative w-full h-screen">
+      {/* Pause Menu */}
+      <PauseMenu isOpen={isPaused} onClose={closePause} roomName="Memory Leak Room" />
+      
       <Scene3D cameraPosition={[0, 6, 10]} cameraFov={75}>
         <color attach="background" args={['#222222']} />
         <MemoryLeakRoomContent 

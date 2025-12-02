@@ -263,11 +263,15 @@ function ForwardScrollContent({ scrollZ, onBookClick }: { scrollZ: number; onBoo
   );
 }
 
+import PauseMenu from '@/components/ui/PauseMenu';
+import { usePauseMenu } from '@/lib/usePauseMenu';
+
 export default function Door404RoomScene() {
   const router = useRouter();
   const [scrollZ, setScrollZ] = useState(5);
   const [showBookMessage, setShowBookMessage] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { isPaused, closePause } = usePauseMenu();
   
   const MIN_Z = 5;
   const MAX_Z = -75;
@@ -308,6 +312,9 @@ export default function Door404RoomScene() {
 
   return (
     <div ref={containerRef} className="w-full h-screen relative">
+      {/* Pause Menu */}
+      <PauseMenu isOpen={isPaused} onClose={closePause} roomName="404 Room" />
+      
       <Scene3D cameraPosition={[0, 1, 5]} cameraFov={75}>
         <color attach="background" args={['#1a1a1a']} />
         <fog attach="fog" args={['#1a1a1a', 5, 25]} />
